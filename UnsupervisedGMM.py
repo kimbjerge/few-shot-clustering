@@ -152,8 +152,8 @@ if __name__=='__main__':
         print('resnet18')
         #ResNetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
         ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
-        modelName = "./models/Resnet18_"+args.weights+"_model.pth"
-        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0218_092723_AdvLoss.pth"
+        #modelName = "./models/Resnet18_"+args.weights+"_model.pth"
+        modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0218_092723_AdvLoss.pth"
         feat_dim = 512
 
     model = EmbeddingsModel(ResNetModel, num_classes, use_fc=False)
