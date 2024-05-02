@@ -20,9 +20,9 @@ from easyfsl.datasets import FeaturesDataset
 
 from FewShotModelData import EmbeddingsModel, FewShotDataset
 
-from torchvision.models import resnet50 #, ResNet50_Weights
-from torchvision.models import resnet34 #, ResNet34_Weights
-from torchvision.models import resnet18 #, ResNet18_Weights
+from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet34, ResNet34_Weights
+from torchvision.models import resnet18, ResNet18_Weights
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
@@ -139,21 +139,23 @@ if __name__=='__main__':
     
     if args.model == 'resnet50':
         print('resnet50')
-        #ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
-        ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
+        ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
+        #ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
         modelName = "./models/Resnet50_"+args.weights+"_model.pth"
         feat_dim = 2048
     if args.model == 'resnet34':
         print('resnet34')
-        ResNetModel = resnet34(pretrained=True) # 80.86, 25.6M
+        ResNetModel = resnet34(weights=ResNet34_Weights.IMAGENET1K_V2)
+        #ResNetModel = resnet34(pretrained=True) # 80.86, 25.6M
         modelName = "./models/Resnet34_"+args.weights+"_model.pth"
         feat_dim = 512
     if args.model == 'resnet18':
         print('resnet18')
-        #ResNetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
-        ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
+        ResNetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
+        #ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet18_"+args.weights+"_model.pth"
-        modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0218_092723_AdvLoss.pth"
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0218_092723_AdvLoss.pth"
+        modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss.pth"
         feat_dim = 512
 
     model = EmbeddingsModel(ResNetModel, num_classes, use_fc=False)
@@ -174,9 +176,10 @@ if __name__=='__main__':
     
     #%% Create dataset
     if args.dataset == 'euMoths':
-        #test_set = FewShotDataset(split="train", image_size=image_size, training=False)
-        #test_set = FewShotDataset(split="val", image_size=image_size, training=False)
-        test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirEuMoths, training=False)
+        test_set = FewShotDataset(split="train", image_size=image_size,  root=dataDirEuMoths, training=False)
+        test_classes = num_classes
+        #test_set = FewShotDataset(split="val", image_size=image_size,  root=dataDirEuMoths, training=False)
+        #test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirEuMoths, training=False)
         print("euMoths Test dataset")
     if args.dataset == 'CUB':
         #test_set = FewShotDataset(split="train", image_size=image_size, training=False)
@@ -238,7 +241,7 @@ if __name__=='__main__':
         predictions_all = sc.fit_predict(features_all)  
         
     accuracy, TP = computeAccuracy(np.array(labels_all), predictions_all)
-    print("Accuracy 50 classes", accuracy, TP, len(predictions_all))
+    print("Accuracy", str(test_classes) + " classes", accuracy, TP, len(predictions_all))
 
     #%% Select only 8 classes for visual illustration
     index = np.where((predictions_all == 1) | 
@@ -250,7 +253,7 @@ if __name__=='__main__':
                      (predictions_all == 17) |   
                      (predictions_all == 19))
 
-    featuers = features_all[index]
+    features = features_all[index]
     predictions = predictions_all[index]
     labels = np.array(labels_all)[index]  
 
@@ -263,7 +266,7 @@ if __name__=='__main__':
     # Accuracy 50 classes 0.53, 8 classes 0.41
 
     tsne = TSNE(n_components=2, verbose=1, random_state=123)
-    z = tsne.fit_transform(featuers)
+    z = tsne.fit_transform(features)
     df = pd.DataFrame()
     df["y"] = predictions
     df["comp-1"] = z[:,0]
