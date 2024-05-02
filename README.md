@@ -3,8 +3,8 @@ Python code for clustering of images using few-shot learning and episodic traini
 
 # Installation conda environment on Windows
 
-conda create --name fslclust --file req_env_win.txt
-conda activate fslclust
+- conda create --name fslclust --file req_env_win.txt
+- conda activate fslclust
 
 The easy-few-shot-learning (easyfsl) framework has been used to boost our experiments with few-shot image classification. 
 The framework contains libraries for 11 few-shot learning methods, handling of support and query data and Python code for resnet12 backend with episodic training.
@@ -85,10 +85,10 @@ To train models on the CUB and EU-Moths dataset with pretrained weights from Ima
 
 The Linux bash script/trainCUBPreAdv.sh contains command arguments to train with the CU-Birds dataset:
 
-python FewShotTrainingAdvLoss.py --model resnet18 --dataset CUB --mode episodic --slossFunc Std --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --tasks 500 --valTasks 100 --query 10 --device cuda:0
+    python FewShotTrainingAdvLoss.py --model resnet18 --dataset CUB --mode episodic --slossFunc Std --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --tasks 500 --valTasks 100 --query 10 --device cuda:0
 
 The linux bash script/traineuMothsPreAdv.sh contains command arguments to train with the EU-Moths dataset:
 
-python FewShotTrainingAdvLoss.py --model resnet18 --dataset euMoths --mode episodic --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --slossFunc Std --tasks 500 --valTasks 100 --query 6 --device cuda:0
+    python FewShotTrainingAdvLoss.py --model resnet18 --dataset euMoths --mode episodic --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --slossFunc Std --tasks 500 --valTasks 100 --query 6 --device cuda:0
 
 The folder modelsFinalPreAdv contains the trained models with files that are generated for every model and contains arguments and results for training.
