@@ -8,10 +8,11 @@ https://drive.google.com/drive/folders/1xaAJG_-wGpqR0JRUAEjzbcZyS5GxrhNk
 
 The zipped files must be copied and unzipped to the folders:
 
-data/Omniglot
-data/CUB
-data/euMoths
-miniImageNet
+ - data/Omniglot
+ - data/CUB
+ - data/euMoths
+
+## miniImageNet
 This dataset presents a preprocessed version of the miniImageNet benchmark dataset used in few-shot learning. This version of miniImageNet is not resized to any particular size and is left to be the same size as they are in the ImageNet dataset.
 
 Download and unzip the preprocessed version of the miniImageNet benchmark dataset from: https://www.kaggle.com/datasets/arjunashok33/miniimagenet
@@ -59,3 +60,16 @@ When training with pre-trained weights the model with the lowest loss is selecte
 The models and results will be stored in the folder modelsAdv and tensorboard log files are stored in the folder runs.
 
 To view the tensorboard log files write: tensorflow --logdir runs/
+
+# CU-Birds and EU moths training with transfer learning
+To train models on the CUB and EU-Moths dataset with pretrained weights from ImageNet the backbones ResNet18, ResNet34 and ResNet50 is provided. It is also possible to train miniImageNet with pre-trained weights, however, since miniImageNet is a subset of ImagneNet it would give unrealistic good results for domain adaptation since the same classes are included during pre-training and validation.
+
+The Linux bash script/trainCUBPreAdv.sh contains command arguments to train with the CU-Birds dataset:
+
+python FewShotTrainingAdvLoss.py --model resnet18 --dataset CUB --mode episodic --slossFunc Std --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --tasks 500 --valTasks 100 --query 10 --device cuda:0
+
+The linux bash script/traineuMothsPreAdv.sh contains command arguments to train with the EU-Moths dataset:
+
+python FewShotTrainingAdvLoss.py --model resnet18 --dataset euMoths --mode episodic --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --slossFunc Std --tasks 500 --valTasks 100 --query 6 --device cuda:0
+
+The folder modelsFinalPreAdv contains the trained models with files that are generated for every model and contains arguments and results for training.
