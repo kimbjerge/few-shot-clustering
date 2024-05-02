@@ -1,6 +1,25 @@
 # Few-shot-clustering
 Python code for clustering of images using few-shot learning and episodic training
 
+# Installation conda environment on Windows
+
+conda create --name fslclust --file req_env_win.txt
+conda activate fslclust
+
+The easy-few-shot-learning (easyfsl) framework has been used to boost our experiments with few-shot image classification. 
+The framework contains libraries for 11 few-shot learning methods, handling of support and query data and Python code for resnet12 backend with episodic training.
+
+Install the Python library easyfsl "pip install easyfsl" or use the GitHub:
+
+https://github.com/sicara/easy-few-shot-learning
+
+# Clustering of feature embeddings
+
+python UnsupervisedGMM.py 
+
+The code selectes one of the below datasets and computes the embedding features using a few-shot trained model with episodic training.
+The resulting embeddings are clustered by selecting different clustering models such as GMM and K-means.
+
 # Datasets used for training, validation, and testing
 A copy of the prepared Omniglot, CU-Birds and EU-moths datasets can be downloaded from here:
 
