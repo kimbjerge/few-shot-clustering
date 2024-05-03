@@ -342,7 +342,7 @@ def saveArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterBetw
     
     with open(modelName.replace('.pth', '.txt'), 'w') as f:
         line = "model,dataset,mode,cosine,epochs,m1,m2,slossFunc,alpha,pretrained,learnRate,device,trainTasks,"
-        line += "valTasks,batch,way,query,bestEpoch,valAccuracy,testAccuracy,meanBetween,trainLoss,modelName\n"
+        line += "valTasks,batch,way,shot,query,bestEpoch,valAccuracy,testAccuracy,meanBetween,trainLoss,modelName\n"
         f.write(line)
         line = args.model + ','
         line += args.dataset + ','
@@ -360,6 +360,7 @@ def saveArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterBetw
         line += str(args.valTasks) + ','
         line += str(args.batch) + ',' 
         line += str(args.way) + ','
+        line += str(args.shot) + ','
         line += str(args.query) + ','
         line += str(best_epoch) + ','
         line += str(valAccuracy) + ','
@@ -388,9 +389,10 @@ if __name__=='__main__':
     parser.add_argument('--tasks', default='200', type=int) # training tasks per epoch (*6 queries)
     parser.add_argument('--valTasks', default='100', type=int) # tasks used for validation
     parser.add_argument('--batch', default='250', type=int) # training batch size
-    parser.add_argument('--way', default='5', type=int) # n-Ways for episodic training and few-shot validation
+    parser.add_argument('--way', default='5', type=int) # k-Ways for episodic training and few-shot validation
     parser.add_argument('--query', default='10', type=int) # n-Query for episodic training and few-shot validation
     parser.add_argument('--learnRate', default='0.05', type=float) # learn rate for episodic and classic training
+    parser.add_argument('--shot', default='5', type=int) # n-shot for episodic training and few-shot validation
     args = parser.parse_args()
  
     dataDir = './data/' + args.dataset
@@ -420,7 +422,7 @@ if __name__=='__main__':
     n_workers = 12
  
     n_way = args.way # 5 or 20 paper did
-    n_shot = 5 # For episodic training use 5 shot
+    n_shot = args.shot # For episodic training use 5 shot
     n_query = args.query
     n_tasks_per_epoch = args.tasks
     n_validation_tasks = args.valTasks
