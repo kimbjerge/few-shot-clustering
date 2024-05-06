@@ -141,7 +141,7 @@ if __name__=='__main__':
         ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
         #ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet50_"+args.weights+"_model.pth"
-        modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0506_074745_AdvLoss.pth"
+        modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0506_074745_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query
         feat_dim = 2048
     if args.model == 'resnet34':
         print('resnet34')
@@ -181,10 +181,10 @@ if __name__=='__main__':
     
     #%% Create dataset
     if args.dataset == 'euMoths':
-        test_set = FewShotDataset(split="train", image_size=image_size,  root=dataDirEuMoths, training=False)
-        test_classes = num_classes
+        #test_set = FewShotDataset(split="train", image_size=image_size,  root=dataDirEuMoths, training=False)
+        #test_classes = num_classes
         #test_set = FewShotDataset(split="val", image_size=image_size,  root=dataDirEuMoths, training=False)
-        #test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirEuMoths, training=False)
+        test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirEuMoths, training=False)
         print("euMoths Test dataset")
     if args.dataset == 'CUB':
         #test_set = FewShotDataset(split="train", image_size=image_size, training=False)
