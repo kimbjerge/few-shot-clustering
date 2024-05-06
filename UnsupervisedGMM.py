@@ -37,7 +37,6 @@ import seaborn as sns
 import pandas as pd
 from statistics import mode
 
-
 # Gausion Mixtures Models plotting
 def draw_ellipse(position, covariance, ax=None, **kwargs):
     """Draw an ellipse with a given position and covariance"""
@@ -100,10 +99,10 @@ def computeAccuracy(labels, predictions):
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='resnet18') #resnet18, resnet34, resnet50
+    parser.add_argument('--model', default='resnet50') #resnet18, resnet34, resnet50
     parser.add_argument('--weights', default='euMoths') #ImageNet, euMoths, CUB
     parser.add_argument('--dataset', default='euMoths') #miniImagenet, euMoths, CUB
-    parser.add_argument('--method', default='GMM') #IsoForest, GMM, Kmeans, SpecClust
+    parser.add_argument('--method', default='Kmeans') #IsoForest, GMM, Kmeans, SpecClust
     args = parser.parse_args()
   
     resDir = "./result/"
@@ -141,7 +140,8 @@ if __name__=='__main__':
         print('resnet50')
         ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
         #ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
-        modelName = "./models/Resnet50_"+args.weights+"_model.pth"
+        #modelName = "./models/Resnet50_"+args.weights+"_model.pth"
+        modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0506_074745_AdvLoss.pth"
         feat_dim = 2048
     if args.model == 'resnet34':
         print('resnet34')
@@ -152,10 +152,15 @@ if __name__=='__main__':
     if args.model == 'resnet18':
         print('resnet18')
         ResNetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
-        #ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
+        ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet18_"+args.weights+"_model.pth"
-        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0218_092723_AdvLoss.pth"
-        modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss.pth"
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0218_092723_AdvLoss.pth" # univariant scatter 20 classes, 0.73
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0503_101857_AdvLoss.pth" # univariant scatter 40 classes, 0.71
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss2.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.71
+        modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss3.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.71, train 0.98
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.69
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0503_101857_AdvLoss.pth" # multivarian scatter 40 classes 7-shot 4-query 50 epochs
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0504_232800_AdvLoss.pth" # multivarian scatter 40 classes 7-shot 4-query 150 epochs, 0.65
         feat_dim = 512
 
     model = EmbeddingsModel(ResNetModel, num_classes, use_fc=False)
@@ -233,7 +238,7 @@ if __name__=='__main__':
         print("Kmeans clustering")
         kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
         predictions_all = kmeans.fit(features_all).predict(features_all)
-    
+               
     if args.method == 'SpecClust': #NA
         print("Spectral clustering")
         sc = SpectralClustering(n_clusters=test_classes, affinity='precomputed', n_init=100,

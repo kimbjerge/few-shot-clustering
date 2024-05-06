@@ -1,0 +1,2 @@
+model,dataset,mode,cosine,epochs,m1,m2,slossFunc,alpha,pretrained,learnRate,device,trainTasks,valTasks,batch,way,shot,query,bestEpoch,valAccuracy,testAccuracy,meanBetween,trainLoss,modelName
+resnet50,euMoths,episodic,False,70,40,60,Multi,0.5,True,0.001,cuda:1,500,100,250,30,5,6,0,0,0,0,0,./modelsAdv/Resnet50_euMoths_episodic_5_0506_074745_AdvLoss.pth
