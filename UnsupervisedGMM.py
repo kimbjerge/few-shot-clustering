@@ -29,7 +29,9 @@ from matplotlib.patches import Ellipse
 from sklearn.mixture import GaussianMixture
 from sklearn.ensemble import IsolationForest
 from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN, HDBSCAN
 from sklearn.cluster import SpectralClustering
+from sklearn.metrics.cluster import adjusted_rand_score
 
 from sklearn.manifold import TSNE
 #from numpy import reshape
@@ -94,15 +96,51 @@ def computeAccuracy(labels, predictions):
         
     accuracy = TruePositives/len(predictions)
     return accuracy, TruePositives
-            
+
+def computeClusterPerformance(test_classes, features_all, labels_all):
+
+    print("Kmeans clustering")
+    kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
+    predictions_kmeans = kmeans.fit(features_all).predict(features_all)
+    accuracy, TP = computeAccuracy(np.array(labels_all), predictions_kmeans)
+    print("Similar class (SC) score", str(test_classes) + " classes", accuracy, TP, len(predictions_kmeans))
+    score = adjusted_rand_score(np.array(labels_all), predictions_kmeans)
+    print("Rand index (RI) score", str(test_classes) + " classes", score)
+
+    print("Gausian Mixture Models")
+    gmm = GaussianMixture(n_components=test_classes, covariance_type='full', random_state=42)
+    predictions_gmm = gmm.fit(features_all).predict(features_all)
+    accuracy, TP = computeAccuracy(np.array(labels_all), predictions_gmm)
+    print("Similar class (SC) score", str(test_classes) + " classes", accuracy, TP, len(predictions_gmm))
+    score = adjusted_rand_score(np.array(labels_all), predictions_gmm)
+    print("Rand index (RI) score", str(test_classes) + " classes", score)
+
+    print("HSBSCAN clustering")
+    #for max_clusters in [50, None]:
+        #print("Max clusters", max_clusters)
+    dbscan = HDBSCAN(min_cluster_size=2, max_cluster_size=None, store_centers='centroid')
+    embs = features_all / np.linalg.norm(features_all, axis=1, keepdims=True)
+    dbscan.fit(embs)
+    predictions_dbscan = dbscan.labels_  
+    centroids = dbscan.centroids_   
+    accuracy, TP = computeAccuracy(np.array(labels_all), predictions_dbscan)
+    print("Similar class (SC) score", str(test_classes) + " classes", accuracy, TP, len(predictions_dbscan))
+    score = adjusted_rand_score(np.array(labels_all), predictions_dbscan)
+    print("Rand index (RI) score", str(test_classes) + " classes", score)
+    print("Number of centroids", len(centroids))
+    #print(centroids)
+    
+    
 #%% MAIN
 if __name__=='__main__':
 
+    plt.rcParams.update({'font.size': 12})
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default='resnet50') #resnet18, resnet34, resnet50
-    parser.add_argument('--weights', default='euMoths') #ImageNet, euMoths, CUB
+    parser.add_argument('--weights', default='ImageNet') #ImageNet, euMoths, CUB
     parser.add_argument('--dataset', default='euMoths') #miniImagenet, euMoths, CUB
-    parser.add_argument('--method', default='Kmeans') #IsoForest, GMM, Kmeans, SpecClust
+    parser.add_argument('--method', default='ALL') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust
     args = parser.parse_args()
   
     resDir = "./result/"
@@ -141,7 +179,8 @@ if __name__=='__main__':
         ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
         #ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet50_"+args.weights+"_model.pth"
-        modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0506_074745_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_5_1118_130758_AdvLoss.pth" # univariant scatter 5 class 5-shot 6-query, 
+        modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0506_074745_AdvLoss1.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.75 best
         feat_dim = 2048
     if args.model == 'resnet34':
         print('resnet34')
@@ -154,13 +193,20 @@ if __name__=='__main__':
         ResNetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
         ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet18_"+args.weights+"_model.pth"
+        
+        # Best univariant model
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0218_092723_AdvLoss.pth" # univariant scatter 20 classes, 0.73
+        
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0503_101857_AdvLoss.pth" # univariant scatter 40 classes, 0.71
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss2.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.71
-        modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss3.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.71, train 0.98
+        
+        # Best multivariant model
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss3.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.71, train 0.98
+       
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.69
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0503_101857_AdvLoss.pth" # multivarian scatter 40 classes 7-shot 4-query 50 epochs
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0504_232800_AdvLoss.pth" # multivarian scatter 40 classes 7-shot 4-query 150 epochs, 0.65
+        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0506_073056_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query, alpha 1.0, train 0.2, very bad
         feat_dim = 512
 
     model = EmbeddingsModel(ResNetModel, num_classes, use_fc=False)
@@ -224,64 +270,84 @@ if __name__=='__main__':
 
     #%% Plot feature space    
     
-    if args.method == 'GMM':
-        print("Gausian Mixture Models")
-        gmm = GaussianMixture(n_components=test_classes, covariance_type='full', random_state=42)
-        predictions_all = gmm.fit(features_all).predict(features_all)
-
-    if args.method == 'IsoForest': #NA
-        print("Isolated Forest")
-        forest = IsolationForest(n_estimators=test_classes, warm_start=True)
-        predictions_all = forest.fit(features_all).predict(features_all)
-       
-    if args.method == 'Kmeans':
-        print("Kmeans clustering")
-        kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
-        predictions_all = kmeans.fit(features_all).predict(features_all)
-               
-    if args.method == 'SpecClust': #NA
-        print("Spectral clustering")
-        sc = SpectralClustering(n_clusters=test_classes, affinity='precomputed', n_init=100,
-                                assign_labels='discretize')
-        predictions_all = sc.fit_predict(features_all)  
-        
-    accuracy, TP = computeAccuracy(np.array(labels_all), predictions_all)
-    print("Accuracy", str(test_classes) + " classes", accuracy, TP, len(predictions_all))
-
-    #%% Select only 8 classes for visual illustration
-    index = np.where((predictions_all == 1) | 
-                     (predictions_all == 4) |
-                     (predictions_all == 7) |
-                     (predictions_all == 10) |
-                     (predictions_all == 12) |
-                     (predictions_all == 15) |
-                     (predictions_all == 17) |   
-                     (predictions_all == 19))
-
-    features = features_all[index]
-    predictions = predictions_all[index]
-    labels = np.array(labels_all)[index]  
-
-    accuracy, TP = computeAccuracy(labels, predictions)
-    print("Accuracy 8 classes", accuracy, TP, len(predictions))
-
-    # Best performance with ResNet18 - episodic training and scatter loss
-    # Accuracy 50 classes 0.74, 8 classes 0.69
-    # without episodic scatter loss training
-    # Accuracy 50 classes 0.53, 8 classes 0.41
-
-    tsne = TSNE(n_components=2, verbose=1, random_state=123)
-    z = tsne.fit_transform(features)
-    df = pd.DataFrame()
-    df["y"] = predictions
-    df["comp-1"] = z[:,0]
-    df["comp-2"] = z[:,1]
+    if args.method == "ALL":
+        computeClusterPerformance(test_classes, features_all, labels_all)   
+    else:
+        if args.method == 'GMM':
+            print("Gausian Mixture Models")
+            gmm = GaussianMixture(n_components=test_classes, covariance_type='full', random_state=42)
+            predictions_all = gmm.fit(features_all).predict(features_all)
     
-    sns.scatterplot(x="comp-1", y="comp-2", hue=df.y.tolist(),
-                    palette=sns.color_palette("hls", 8),
-    #                data=df).set(title="ImageNet train dataset T-SNE projection")
-                    data=df).set(title="EU moths dataset T-SNE projection")
-   
-
-    #plot_gmm(gmm, features_all) 
+        if args.method == 'IsoForest': #NA
+            print("Isolated Forest")
+            forest = IsolationForest(n_estimators=test_classes, warm_start=True)
+            predictions_all = forest.fit(features_all).predict(features_all)
+           
+        if args.method == 'Kmeans':
+            print("Kmeans clustering")
+            kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
+            predictions_all = kmeans.fit(features_all).predict(features_all)
+                   
+        if args.method == 'SpecClust': #NA
+            print("Spectral clustering")
+            sc = SpectralClustering(n_clusters=test_classes, affinity='precomputed', n_init=100,
+                                    assign_labels='discretize')
+            predictions_all = sc.fit_predict(features_all)  
+            
+        if args.method == 'DBSCANClust': #NA
+            dbscan = DBSCAN(eps=0.2, metric="cosine", n_jobs=6)
+            embs = features_all / np.linalg.norm(features_all, axis=1, keepdims=True)
+            dbscan.fit(embs)
+            predictions_all = dbscan.labels_
+            
+        if args.method == 'HDBSCANClust': 
+            dbscan = HDBSCAN(min_cluster_size=2)
+            embs = features_all / np.linalg.norm(features_all, axis=1, keepdims=True)
+            dbscan.fit(embs)
+            predictions_all = dbscan.labels_       
+            
+        accuracy, TP = computeAccuracy(np.array(labels_all), predictions_all)
+        print("Similarity", str(test_classes) + " classes", accuracy, TP, len(predictions_all))
+        score = adjusted_rand_score(np.array(labels_all), predictions_all)
+        print("Rand index score", str(test_classes) + " classes", score)
+    
+        #%% Select only 8 classes for visual illustration
+        index = np.where((predictions_all == 1) | 
+                         (predictions_all == 4) |
+                         (predictions_all == 7) |
+                         (predictions_all == 10) |
+                         (predictions_all == 12) |
+                         (predictions_all == 15) |
+                         (predictions_all == 17) |   
+                         (predictions_all == 19))
+    
+        features = features_all[index]
+        predictions = predictions_all[index]
+        labels = np.array(labels_all)[index]  
+    
+        accuracy, TP = computeAccuracy(labels, predictions)
+        print("Similarity 8 classes", accuracy, TP, len(predictions))
+        # Compute accuracy
+        score = adjusted_rand_score(labels, predictions)
+        print("Rand index score 8 classes ", score)
+    
+        # Best performance with ResNet18 - episodic training and scatter loss
+        # Accuracy 50 classes 0.74, 8 classes 0.69
+        # without episodic scatter loss training
+        # Accuracy 50 classes 0.53, 8 classes 0.41
+    
+        tsne = TSNE(n_components=2, verbose=1, random_state=123)
+        z = tsne.fit_transform(features)
+        df = pd.DataFrame()
+        df["y"] = predictions
+        df["comp-1"] = z[:,0]
+        df["comp-2"] = z[:,1]
+        
+        sns.scatterplot(x="comp-1", y="comp-2", hue=df.y.tolist(),
+                        palette=sns.color_palette("hls", 8),
+        #                data=df).set(title="ImageNet train dataset T-SNE projection")
+                        data=df).set(title="EU moths dataset T-SNE projection")
+       
+    
+        #plot_gmm(gmm, features_all) 
     
