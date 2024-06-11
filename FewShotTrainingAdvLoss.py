@@ -68,10 +68,10 @@ def classicTrain(model, modelName, train_loader, val_loader, few_shot_classifier
                  pretrained=False, m1=500, m2=1000, n_epochs=200, learnRate=5e-4):
 
     #scheduler_milestones = [3, 6]
-    if n_epochs < 1000:
-        scheduler_milestones = [70, 140] # From scratch with 200 epochs
-    else:
-        scheduler_milestones = [m1, m2] # From scratch with 1500 epochs
+    #if n_epochs < 1000:
+    #    scheduler_milestones = [70, 140] # From scratch with 200 epochs
+    #else:
+    scheduler_milestones = [m1, m2] # From scratch with 1500 epochs
     
     # 1e-1 - without pretrained weights 5e-4 - with pretrained weights
     #if pretrained:
@@ -296,15 +296,19 @@ def episodicTrain(modelName, train_loader, val_loader, few_shot_classifier,
             few_shot_classifier, val_loader, device=DEVICE, tqdm_prefix="Validation"
         )
         
-        if pretrained:    
-            if best_loss > average_loss: 
+        if pretrained: 
+            error_loss = (1.0 - validation_accuracy) #+ average_loss
+            #if best_loss > average_loss: 
+            if best_loss > error_loss: # Minimize average_loss and error
                 best_epoch = epoch+1
-                best_loss = average_loss
+                #best_loss = average_loss
+                best_loss = error_loss
                 best_validation_accuracy = validation_accuracy
                 best_scatter_between = average_scatter_between
                 best_state = few_shot_classifier.state_dict()
                 torch.save(few_shot_classifier.backbone, modelName)
-                print(f"Lowest loss model saved with accuracy {(best_validation_accuracy):.4f} and loss {(best_loss):.4f}", modelName)
+                #print(f"Lowest loss model saved with accuracy {(best_validation_accuracy):.4f} and eloss {(best_loss):.4f}", modelName)
+                print(f"Best model saved with accuracy {(best_validation_accuracy):.4f} and eloss {(best_loss):.4f}", modelName)
         else:
             if validation_accuracy > best_validation_accuracy:
                 best_epoch = epoch+1
@@ -319,6 +323,7 @@ def episodicTrain(modelName, train_loader, val_loader, few_shot_classifier,
         tb_writer.add_scalar("Train/closs", average_closs, epoch)
         tb_writer.add_scalar("Train/sloss", average_sloss, epoch)
         tb_writer.add_scalar("Val/acc", validation_accuracy, epoch)
+        tb_writer.add_scalar("Val/eloss", error_loss, epoch)
     
         # Warn the scheduler that we did an epoch
         # so it knows when to decrease the learning rate
