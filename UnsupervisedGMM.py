@@ -20,16 +20,20 @@ from easyfsl.datasets import FeaturesDataset
 
 from FewShotModelData import EmbeddingsModel, FewShotDataset
 
-from torchvision.models import resnet50, ResNet50_Weights
-from torchvision.models import resnet34, ResNet34_Weights
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import resnet50
+from torchvision.models import resnet34
+from torchvision.models import resnet18
+from torchvision.models import ResNet50_Weights
+from torchvision.models import ResNet34_Weights
+from torchvision.models import ResNet18_Weights
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from sklearn.mixture import GaussianMixture
 from sklearn.ensemble import IsolationForest
 from sklearn.cluster import KMeans
-from sklearn.cluster import DBSCAN, HDBSCAN
+from sklearn.cluster import DBSCAN
+from sklearn.cluster import HDBSCAN
 from sklearn.cluster import SpectralClustering
 from sklearn.metrics.cluster import adjusted_rand_score
 
@@ -138,9 +142,9 @@ if __name__=='__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default='resnet50') #resnet18, resnet34, resnet50
-    parser.add_argument('--weights', default='ImageNet') #ImageNet, euMoths, CUB
+    parser.add_argument('--weights', default='euMoths') #ImageNet, euMoths, CUB
     parser.add_argument('--dataset', default='euMoths') #miniImagenet, euMoths, CUB
-    parser.add_argument('--method', default='ALL') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust
+    parser.add_argument('--method', default='Kmeans') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, ALL
     args = parser.parse_args()
   
     resDir = "./result/"
@@ -179,8 +183,19 @@ if __name__=='__main__':
         ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
         #ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet50_"+args.weights+"_model.pth"
-        #modelName = "./models/Resnet50_"+args.weights+"_episodic_5_1118_130758_AdvLoss.pth" # univariant scatter 5 class 5-shot 6-query, 
-        modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0506_074745_AdvLoss1.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.75 best
+        
+        modelName = "./models/Resnet50_"+args.weights+"_episodic_9_0612_163546_AdvLoss.pth"
+        
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_9_0608_230616_AdvLoss.pth" # univariant scatter 20 class 5-shot 6-query, acc, 0.71
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_9_0609_074822_AdvLoss.pth" # univariant scatter 5 class 5-shot 6-query, acc, 0.64
+        
+        #modelName = "./models/Resnet50_"+args.weights+"_classic_0_0610_202623_AdvLoss.pth" # classic training 
+        
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0609_203058_AdvLoss1.pth" # multivariant scatter 30 classes 5-shot 6-query, acc, 0.76 0.62 all best
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_0_0610_120617_AdvLoss.pth" # CrossEntropy loss classes 5-shot 6-query, acc,
+        
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_5_1118_130758_AdvLoss.pth" # univariant scatter 5 class 5-shot 6-query, 0.75 best loss
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_5_0506_074745_AdvLoss1.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.75 best loss
         feat_dim = 2048
     if args.model == 'resnet34':
         print('resnet34')
@@ -191,7 +206,7 @@ if __name__=='__main__':
     if args.model == 'resnet18':
         print('resnet18')
         ResNetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
-        ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
+        #ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet18_"+args.weights+"_model.pth"
         
         # Best univariant model
