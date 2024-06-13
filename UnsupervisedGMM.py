@@ -219,7 +219,6 @@ if __name__=='__main__':
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss3.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.71, train 0.98
        
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0502_214439_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query, 0.69
-        #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0503_101857_AdvLoss.pth" # multivarian scatter 40 classes 7-shot 4-query 50 epochs
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_5_0504_232800_AdvLoss.pth" # multivarian scatter 40 classes 7-shot 4-query 150 epochs, 0.65
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0506_073056_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query, alpha 1.0, train 0.2, very bad
         feat_dim = 512
