@@ -298,7 +298,7 @@ def episodicTrain(modelName, train_loader, val_loader, few_shot_classifier,
         
         if pretrained: 
             error_loss = (1.0 - validation_accuracy) #+ average_loss
-            #if best_loss > average_loss: 
+            #if best_loss < average_loss: 
             if best_loss > error_loss: # Minimize average_loss and error
                 best_epoch = epoch+1
                 #best_loss = average_loss

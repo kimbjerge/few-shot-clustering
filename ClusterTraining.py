@@ -6,7 +6,6 @@ Created on Fri Jun 13 09:32:35 2024
 @author: Kim Bjerge
 """
 
-from pathlib import Path
 import random
 import argparse
 import numpy as np
@@ -20,13 +19,13 @@ from PrototypicalNetworksNovelty import PrototypicalNetworksNovelty
 
 from easyfsl.datasets import FeaturesDataset
 from easyfsl.modules import resnet12
-from easyfsl.methods import PrototypicalNetworks, FewShotClassifier
+from easyfsl.methods import FewShotClassifier
 from easyfsl.samplers import TaskSampler
 from easyfsl.utils import evaluate
 from easyfsl.utils import predict_embeddings
 
 from torch.utils.data import DataLoader
-from torch.optim import SGD, Adam, Optimizer
+from torch.optim import SGD, Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.tensorboard import SummaryWriter
 
@@ -37,6 +36,7 @@ from torchvision.models import resnet18, ResNet18_Weights
 
 from sklearn.cluster import KMeans
 from sklearn.metrics.cluster import adjusted_rand_score
+from statistics import mode
 
 #from torchvision.models.efficientnet import efficientnet_b3 #, EfficientNet_B3_Weights
 #from torchvision.models.efficientnet import efficientnet_b4 #, EfficientNet_B4_Weights
@@ -46,24 +46,41 @@ from FewShotModelData import EmbeddingsModel, FewShotDataset
 
 IMAGENET_NORMALIZATION = {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}
 
+def computeSimilarClassScore(labels, predictions):
+    
+    predDic = {}
+    for idx in range(len(predictions)):
+        prediction = predictions[idx]
+        if prediction in predDic:
+            predDic[prediction].append(labels[idx])
+        else:
+            predDic[prediction] = []
+            predDic[prediction].append(labels[idx])
+    
+    TruePositives = 0
+    for i, key in enumerate(predDic):    
+        TruePositives += sum(predDic[key]==mode(predDic[key]))
+        
+    SCscore = TruePositives/len(predictions)
+    return SCscore
+
 def evaluateClustering(embeddings_model, val_loader, device, test_classes):
-    
-    
+       
     print("Evaluate clustering with K-means on feature embeddings")
     
     embeddings_df = predict_embeddings(val_loader, embeddings_model, device=device)
             
     features_dataset = FeaturesDataset.from_dataframe(embeddings_df)
     features_all = features_dataset[:][0].numpy()
-    #Class_name
     labels_all = features_dataset[:][1]   
     
     kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
     predictions_all = kmeans.fit(features_all).predict(features_all)
-    score = adjusted_rand_score(np.array(labels_all), predictions_all)
-    print("Rand index (RI) score", str(test_classes) + " classes", score)
+    RIscore = adjusted_rand_score(np.array(labels_all), predictions_all)
+    SCscore = computeSimilarClassScore(np.array(labels_all), predictions_all)
+    print("Rand index (RI) score",  RIscore, "Similar class (SC) score", SCscore, "for classes", str(test_classes))
     
-    return score
+    return RIscore, SCscore
                        
 #%% Classical training      
 def train_epoch(entropyLossFunction: nn.CrossEntropyLoss, 
@@ -90,20 +107,10 @@ def train_epoch(entropyLossFunction: nn.CrossEntropyLoss,
 
 
 def classicTrain(model, modelName, train_loader, val_loader, few_shot_classifier,  
-                 pretrained=False, m1=500, m2=1000, n_epochs=200, learnRate=5e-4,  
+                 pretrained=False, m1=50, m2=80, n_epochs=100, learnRate=5e-4,  
                  test_classes=0, evaluateCluster=True):
 
-    #scheduler_milestones = [3, 6]
-    #if n_epochs < 1000:
-    #    scheduler_milestones = [70, 140] # From scratch with 200 epochs
-    #else:
     scheduler_milestones = [m1, m2] # From scratch with 1500 epochs
-    
-    # 1e-1 - without pretrained weights 5e-4 - with pretrained weights
-    #if pretrained:
-    #    learning_rate = 5e-4
-    #else:
-    #    learning_rate = 0.1
         
     learning_rate = learnRate
 
@@ -142,9 +149,11 @@ def classicTrain(model, modelName, train_loader, val_loader, few_shot_classifier
             model.eval()
                     
             if evaluateCluster:
-                validation_accuracy = evaluateClustering(
+                RIscore, SCscore = evaluateClustering(
                     model, val_loader, device=DEVICE, test_classes=test_classes
-                )        
+                )      
+                #validation_accuracy = (RIscore + SCscore)/2
+                validation_accuracy = SCscore
             else:
                 validation_accuracy = evaluate(
                     few_shot_classifier, val_loader, device=DEVICE, tqdm_prefix="Validation"
@@ -277,10 +286,9 @@ def CosineEmbeddingLoss(scores, labels, margin=0.6):
     return loss_sum
 
 def episodicTrain(model, modelName, train_loader, val_loader, few_shot_classifier, 
-                  m1=500, m2=1000, n_epochs=1500, alpha=0.1, slossFunc="Mean", 
-                  cosine=False, learnRate=0.1, pretrained=False, 
-                  test_classes=0, evaluateCluster=True):
-    
+                  m1=5, m2=8, n_epochs=10, alpha=0.5, slossFunc="Multi", 
+                  cosine=False, learnRate=0.001, pretrained=False, 
+                  test_classes=50, evaluateCluster=True):  
     if cosine:
         entropyLossFunction = CosineEmbeddingLoss
         #entropyLossFunction = nn.CrossEntropyLoss()
@@ -290,10 +298,10 @@ def episodicTrain(model, modelName, train_loader, val_loader, few_shot_classifie
         print("CrossEntropyLoss")
     
     #scheduler_milestones = [10, 30]
-    if n_epochs < 1000:
-        scheduler_milestones = [60, 120] # From scratch with 200 epochs
-    else:
-        scheduler_milestones = [m1, m2] # From scratch with 1500 epochs
+    #if n_epochs < 1000:
+    #    scheduler_milestones = [60, 120] # From scratch with 200 epochs
+    #else:
+    scheduler_milestones = [m1, m2] # From scratch with 1500 epochs
         
     scheduler_gamma = 0.1
     learning_rate = learnRate # 1e-2
@@ -330,42 +338,30 @@ def episodicTrain(model, modelName, train_loader, val_loader, few_shot_classifie
                                                                                                    alphaUsed, cosine)
         
         if evaluateCluster:
-            validation_accuracy = evaluateClustering(
+            RIscore, SCscore = evaluateClustering(
                 model, val_loader, device=DEVICE, test_classes=test_classes
-            )        
+            ) 
+            validation_accuracy = SCscore
         else:
             validation_accuracy = evaluate(
                 few_shot_classifier, val_loader, device=DEVICE, tqdm_prefix="Validation"
             )
         
-        if pretrained: 
-            error_loss = (1.0 - validation_accuracy) #+ average_loss
-            #if best_loss > average_loss: 
-            if best_loss > error_loss: # Minimize average_loss and error
-                best_epoch = epoch+1
-                #best_loss = average_loss
-                best_loss = error_loss
-                best_validation_accuracy = validation_accuracy
-                best_scatter_between = average_scatter_between
-                best_state = few_shot_classifier.state_dict()
-                torch.save(few_shot_classifier.backbone, modelName)
-                #print(f"Lowest loss model saved with accuracy {(best_validation_accuracy):.4f} and eloss {(best_loss):.4f}", modelName)
-                print(f"Best model saved with accuracy {(best_validation_accuracy):.4f} and eloss {(best_loss):.4f}", modelName)
-        else:
-            if validation_accuracy > best_validation_accuracy:
-                best_epoch = epoch+1
-                best_loss = average_loss
-                best_validation_accuracy = validation_accuracy
-                best_scatter_between = average_scatter_between
-                best_state = few_shot_classifier.state_dict()
-                torch.save(few_shot_classifier.backbone, modelName)
-                print(f"Best model saved with accuracy {(best_validation_accuracy):.4f} and loss {(best_loss):.4f}", modelName)
-                
+        #if best_loss < average_loss: # Lowest training loss
+        if validation_accuracy > best_validation_accuracy:
+            best_epoch = epoch+1
+            best_loss = average_loss
+            best_validation_accuracy = validation_accuracy
+            best_scatter_between = average_scatter_between
+            best_state = few_shot_classifier.state_dict()
+            torch.save(few_shot_classifier.backbone, modelName)
+            #print(f"Lowest loss model saved with accuracy {(best_validation_accuracy):.4f} and loss {(best_loss):.4f}", modelName)
+            print(f"Best model saved with accuracy {(best_validation_accuracy):.4f} and loss {(best_loss):.4f}", modelName)
+            
         tb_writer.add_scalar("Train/loss", average_loss, epoch)
         tb_writer.add_scalar("Train/closs", average_closs, epoch)
         tb_writer.add_scalar("Train/sloss", average_sloss, epoch)
         tb_writer.add_scalar("Val/acc", validation_accuracy, epoch)
-        tb_writer.add_scalar("Val/eloss", error_loss, epoch)
     
         # Warn the scheduler that we did an epoch
         # so it knows when to decrease the learning rate
@@ -387,11 +383,11 @@ def test(model, test_loader, few_shot_classifier, n_workers, DEVICE):
     return accuracy
 
 #%% Saving result to file  
-def saveArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterBetween, bestLoss):
+def saveFSLArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterBetween, bestLoss):
     
     with open(modelName.replace('.pth', '.txt'), 'w') as f:
         line = "model,dataset,mode,cosine,epochs,m1,m2,slossFunc,alpha,cluster,pretrained,learnRate,device,trainTasks,"
-        line += "valTasks,batch,way,shot,query,bestEpoch,valScore,testScore,meanBetween,trainLoss,modelName\n"
+        line += "valTasks,batch,way,shot,query,bestEpoch,valAccuracy,testAccuracy,meanBetween,trainLoss,modelName\n"
         print(line)
         f.write(line)
         line = args.model + ','
@@ -420,8 +416,44 @@ def saveArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterBetw
         line += str(bestLoss) + ','
         line += modelName + '\n'
         print(line)
-        f.write(line)        
-
+        f.write(line)
+        
+#%% Saving result to file with cluster RI and SC scores
+def saveClusterArgs(modelName, args, best_epoch, valRIscore, testRIscore, testSCscore, scatterBetween, bestLoss):
+    
+    with open(modelName.replace('.pth', '.txt'), 'w') as f:
+        line = "model,dataset,mode,cosine,epochs,m1,m2,slossFunc,alpha,cluster,pretrained,learnRate,device,trainTasks,"
+        line += "valTasks,batch,way,shot,query,bestEpoch,valRIscore,testRIscore,testSCscore,meanBetween,trainLoss,modelName\n"
+        print(line)
+        f.write(line)
+        line = args.model + ','
+        line += args.dataset + ','
+        line += args.mode + ',' 
+        line += str(args.cosine) + ',' 
+        line += str(args.epochs) + ',' 
+        line += str(args.m1) + ','
+        line += str(args.m2)  + ','
+        line += args.slossFunc + ',' 
+        line += str(args.alpha) + ','
+        line += str(args.cluster) + ','
+        line += str(args.pretrained) + ','
+        line += str(args.learnRate) + ','
+        line += args.device + ','
+        line += str(args.tasks) + ',' 
+        line += str(args.valTasks) + ','
+        line += str(args.batch) + ',' 
+        line += str(args.way) + ','
+        line += str(args.shot) + ','
+        line += str(args.query) + ','
+        line += str(best_epoch) + ','
+        line += str(valRIscore) + ','
+        line += str(testRIscore) + ','
+        line += str(testSCscore) + ','
+        line += str(scatterBetween) + ','
+        line += str(bestLoss) + ','
+        line += modelName + '\n'
+        print(line)
+        f.write(line)  
 #%% MAIN
 if __name__=='__main__':
     
@@ -573,21 +605,30 @@ if __name__=='__main__':
     dateTime = now.strftime("%m%d_%H%M%S")
     if args.model == 'resnet50':
         print('resnet50')
-        NetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(DEVICE) # 80.858, 25.6M
+        if args.pretrained:
+            NetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(DEVICE) # 80.858, 25.6M
+        else:
+            NetModel = resnet50(weights=None).to(DEVICE) 
         #NetModel = resnet50(pretrained=args.pretrained).to(DEVICE)    
         modelName = "./modelsAdv/Resnet50_" + args.dataset + '_' + args.mode + '_' + str(int(args.alpha*10)) + '_' + dateTime + "_AdvLoss.pth"
         model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
         
     if args.model == 'resnet34':
         print('resnet34')
-        NetModel = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1).to(DEVICE) # 73.314, 21.8M
+        if args.pretrained:
+            NetModel = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1).to(DEVICE) # 73.314, 21.8M
+        else:
+            NetModel = resnet34(weights=None).to(DEVICE)          
         #NetModel = resnet34(pretrained=args.pretrained).to(DEVICE)
         modelName = "./modelsAdv/Resnet34_" + args.dataset + '_' + args.mode + '_' + str(int(args.alpha*10))  + '_' + dateTime + "_AdvLoss.pth"   
         model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
         
     if args.model == 'resnet18':
         print('resnet18')
-        NetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(DEVICE) # 69.758, 11.7M
+        if args.pretrained:
+            NetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(DEVICE) # 69.758, 11.7M
+        else:
+            NetModel = resnet18(weights=None).to(DEVICE) 
         #NetModel = resnet18(pretrained=args.pretrained).to(DEVICE) 
         modelName = "./modelsAdv/Resnet18_" + args.dataset + '_' + args.mode  + '_' + str(int(args.alpha*10)) + '_' + dateTime + "_AdvLoss.pth"
         model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
@@ -600,7 +641,10 @@ if __name__=='__main__':
         
     model = model.to(DEVICE)
     print("Saving model as", modelName)
-    saveArgs(modelName, args, 0, 0, 0, 0, 0)
+    if eval_cluster:
+        saveClusterArgs(modelName, args, 0, 0, 0, 0, 0, 0)
+    else:
+        saveFSLArgs(modelName, args, 0, 0, 0, 0, 0)
 
     if args.cosine:
         few_shot_classifier = PrototypicalNetworksNovelty(model).to(DEVICE)
@@ -650,8 +694,9 @@ if __name__=='__main__':
         test_classes = len(set(test_set.get_labels()))
         model.set_use_fc(False)
         model.eval()
-        accuracy = evaluateClustering(model, test_loader, DEVICE, test_classes) # RI score
-        textLine = f"Cluster RI score val/test : {(100 * best_accuracy):.2f}%/{(100 * accuracy):.2f}%," + args.model + "," + args.dataset 
+        testRIscore, testSCscore = evaluateClustering(model, test_loader, DEVICE, test_classes) # RI score
+        saveFSLArgs(modelName, args, best_epoch, best_accuracy, testRIscore, testSCscore, best_scatter_between, best_loss)
+        textLine = f"Cluster score valRI/testRI,testSC : {(100 * best_accuracy):.2f}%/{(100 * testRIscore):.2f}%,{(100 * testSCscore):.2f}%," + args.model + "," + args.dataset 
     else:
         test_sampler = TaskSampler(
             test_set, n_way=n_way, n_shot=n_shot, n_query=n_query, n_tasks=n_test_tasks
@@ -664,9 +709,8 @@ if __name__=='__main__':
             collate_fn=test_sampler.episodic_collate_fn,
         )
         accuracy = test(model, test_loader, few_shot_classifier, n_workers, DEVICE)
-        textLine = f"Accuracy val/test : {(100 * best_accuracy):.2f}%/{(100 * accuracy):.2f}%," + args.model + "," + args.dataset 
-         
-    saveArgs(modelName, args, best_epoch, best_accuracy, accuracy, best_scatter_between, best_loss)
+        textLine = f"Accuracy val/test : {(100 * best_accuracy):.2f}%/{(100 * accuracy):.2f}%," + args.model + "," + args.dataset      
+        saveFSLArgs(modelName, args, best_epoch, best_accuracy, accuracy, best_scatter_between, best_loss)
 
     textLine += "," + args.slossFunc + ',' + str(args.alpha) + "," + str(best_epoch) + "," + f"{(best_loss):.4f}," +  modelName + '\n'
     print(textLine)
