@@ -487,7 +487,7 @@ if __name__=='__main__':
                 transforms.RandomResizedCrop(image_size),
                 transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
                 transforms.RandomHorizontalFlip(),
-                transforms.RandomAffine(40, scale=(.85, 1.15), shear=0), # Added and different from FSL
+                #transforms.RandomAffine(40, scale=(.85, 1.15), shear=0), # Added and different from FSL
                 transforms.ToTensor(),
                 transforms.Normalize(**IMAGENET_NORMALIZATION),
             ]
