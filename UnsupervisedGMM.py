@@ -177,14 +177,23 @@ if __name__=='__main__':
     #%% Create model and prepare for training
     #DEVICE = "cuda"
     DEVICE = "cpu"
+            
     
+    if args.model == 'effB4':
+        print('EfficientNetB4')
+        feat_dim = 1792
+        
     if args.model == 'resnet50':
         print('resnet50')
         ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
         #ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
+        
+        modelName = "./modelsCluster/Resnet50_"+args.weights+"_classic_0_0613_172323_AdvLoss.pth" # SC 0.62 RI 0.40
+        
+        
         #modelName = "./models/Resnet50_"+args.weights+"_model.pth"
         
-        modelName = "./models/Resnet50_"+args.weights+"_episodic_9_0612_163546_AdvLoss.pth"
+        #modelName = "./models/Resnet50_"+args.weights+"_episodic_9_0612_163546_AdvLoss.pth"
         
         #modelName = "./models/Resnet50_"+args.weights+"_episodic_9_0608_230616_AdvLoss.pth" # univariant scatter 20 class 5-shot 6-query, acc, 0.71
         #modelName = "./models/Resnet50_"+args.weights+"_episodic_9_0609_074822_AdvLoss.pth" # univariant scatter 5 class 5-shot 6-query, acc, 0.64

@@ -38,14 +38,15 @@ from sklearn.cluster import KMeans
 from sklearn.metrics.cluster import adjusted_rand_score
 from statistics import mode
 
-#from torchvision.models.efficientnet import efficientnet_b3 #, EfficientNet_B3_Weights
-#from torchvision.models.efficientnet import efficientnet_b4 #, EfficientNet_B4_Weights
+from torchvision.models.efficientnet import efficientnet_b3, EfficientNet_B3_Weights
+from torchvision.models.efficientnet import efficientnet_b4, EfficientNet_B4_Weights
 #from torchvision.models.efficientnet import efficientnet_b7 #, EfficientNet_B7_Weights
 
 from FewShotModelData import EmbeddingsModel, FewShotDataset
 
 IMAGENET_NORMALIZATION = {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}
 
+#%% K-means cluster evaluation - similar class (SC) score and rand index (RI) score     
 def computeSimilarClassScore(labels, predictions):
     
     predDic = {}
@@ -382,6 +383,55 @@ def test(model, test_loader, few_shot_classifier, n_workers, DEVICE):
     accuracy = evaluate(few_shot_classifier, test_loader, device=DEVICE, tqdm_prefix="Test")
     return accuracy
 
+#%% Create models for training
+def createModel(argsModel, argsPretrained):
+    
+    if argsModel == 'effB3':
+        print('EfficientNetB3')
+        NetModel = efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1) # 82.00, 12.2M
+        modelName = "./modelsAdv/EfficientNetB3_"
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+
+    if argsModel == 'effB4':
+        print('EfficientNetB4')
+        NetModel = efficientnet_b4(weights=EfficientNet_B4_Weights.IMAGENET1K_V1) # 83.38, 19.3M
+        modelName = "./modelsAdv/EfficientNetB4_"
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+        
+    if argsModel == 'resnet50':
+        print('resnet50')
+        if argsPretrained:
+            NetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(DEVICE) # 80.858, 25.6M
+        else:
+            NetModel = resnet50(weights=None).to(DEVICE) 
+        modelName = "./modelsAdv/Resnet50_"
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
+        
+    if argsModel == 'resnet34':
+        print('resnet34')
+        if argsPretrained:
+            NetModel = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1).to(DEVICE) # 73.314, 21.8M
+        else:
+            NetModel = resnet34(weights=None).to(DEVICE)          
+        modelName = "./modelsAdv/Resnet34_"  
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
+        
+    if argsModel == 'resnet18':
+        print('resnet18')
+        if argsPretrained:
+            NetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(DEVICE) # 69.758, 11.7M
+        else:
+            NetModel = resnet18(weights=None).to(DEVICE) 
+        modelName = "./modelsAdv/Resnet18_"
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
+        
+    if argsModel == 'resnet12':
+        print('resnet12')
+        modelName = "./modelsAdv/Resnet12_"
+        model = resnet12(use_fc=n_use_fc, num_classes=num_classes).to(DEVICE)
+        
+    return model, modelName
+
 #%% Saving result to file  
 def saveFSLArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterBetween, bestLoss):
     
@@ -418,7 +468,7 @@ def saveFSLArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterB
         print(line)
         f.write(line)
         
-#%% Saving result to file with cluster RI and SC scores
+# Saving result to file with cluster RI and SC scores
 def saveClusterArgs(modelName, args, best_epoch, valRIscore, testRIscore, testSCscore, scatterBetween, bestLoss):
     
     with open(modelName.replace('.pth', '.txt'), 'w') as f:
@@ -454,11 +504,12 @@ def saveClusterArgs(modelName, args, best_epoch, valRIscore, testRIscore, testSC
         line += modelName + '\n'
         print(line)
         f.write(line)  
+        
 #%% MAIN
 if __name__=='__main__':
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='resnet50') #resnet12, resnet18, resnet34, resnet50
+    parser.add_argument('--model', default='resnet50') #resnet12, resnet18, resnet34, resnet50, effB3, effB4
     parser.add_argument('--dataset', default='euMoths') #euMoths, CUB, Omniglot (resnet12), mini_imagenet
     parser.add_argument('--mode', default='episodic') # classic, episodic
     parser.add_argument('--cosine', default='', type=bool) # default use Euclidian distance when no parameter ''
@@ -492,8 +543,11 @@ if __name__=='__main__':
         if args.dataset == 'Omniglot':
             image_size = 28 # Omniglot dataset
             
-    #image_size = 300 # EfficientNet B3
-    #image_size = 380 # EfficientNet B4
+    #if args.model == "effB3":
+    #    image_size = 300
+    #if args.model == "effB4":
+    #    image_size = 380 
+            
     #image_size = 600 # EfficientNet B7
         
     random_seed = 0
@@ -513,7 +567,9 @@ if __name__=='__main__':
     n_validation_tasks = args.valTasks
     n_test_tasks = 200
     
-    # Default for FSL
+    #%% Create training and validation dataset loaders
+
+    # Default for FSL transform
     transform = transforms.Compose(
             [
                 transforms.RandomResizedCrop(image_size),
@@ -524,6 +580,7 @@ if __name__=='__main__':
                 transforms.Normalize(**IMAGENET_NORMALIZATION),
             ]
         )
+    
     # Settings for training moths order classifier
     # transform = transforms.Compose(
     #         [
@@ -594,50 +651,15 @@ if __name__=='__main__':
     print("Training classes", num_classes)
     test_classes = len(set(val_set.get_labels()))
     print("Validation classes", test_classes)
-    
-    # Stable models https://pytorch.org/vision/stable/models.html   # Top 1, Accuracy
-    #NetModel = efficientnet_b7(pretrained=True)                 # 84.122, 66.3M   
-    #NetModel = efficientnet_b4(pretrained=True)                 # 83.384, 19.3M   
-    #NetModel = efficientnet_b3(pretrained=True)                 # 82.003, 12.3M   
-    #modelName = "./models/EffnetB4_euMoths_model.pth"
-      
+          
     now = datetime.now()
     dateTime = now.strftime("%m%d_%H%M%S")
-    if args.model == 'resnet50':
-        print('resnet50')
-        if args.pretrained:
-            NetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2).to(DEVICE) # 80.858, 25.6M
-        else:
-            NetModel = resnet50(weights=None).to(DEVICE) 
-        #NetModel = resnet50(pretrained=args.pretrained).to(DEVICE)    
-        modelName = "./modelsAdv/Resnet50_" + args.dataset + '_' + args.mode + '_' + str(int(args.alpha*10)) + '_' + dateTime + "_AdvLoss.pth"
-        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
         
-    if args.model == 'resnet34':
-        print('resnet34')
-        if args.pretrained:
-            NetModel = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1).to(DEVICE) # 73.314, 21.8M
-        else:
-            NetModel = resnet34(weights=None).to(DEVICE)          
-        #NetModel = resnet34(pretrained=args.pretrained).to(DEVICE)
-        modelName = "./modelsAdv/Resnet34_" + args.dataset + '_' + args.mode + '_' + str(int(args.alpha*10))  + '_' + dateTime + "_AdvLoss.pth"   
-        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
-        
-    if args.model == 'resnet18':
-        print('resnet18')
-        if args.pretrained:
-            NetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1).to(DEVICE) # 69.758, 11.7M
-        else:
-            NetModel = resnet18(weights=None).to(DEVICE) 
-        #NetModel = resnet18(pretrained=args.pretrained).to(DEVICE) 
-        modelName = "./modelsAdv/Resnet18_" + args.dataset + '_' + args.mode  + '_' + str(int(args.alpha*10)) + '_' + dateTime + "_AdvLoss.pth"
-        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc)
-        
-    if args.model == 'resnet12':
-        print('resnet12')
-        modelName = "./modelsAdv/Resnet12_" + args.dataset + '_' + args.mode + '_' + str(int(args.alpha*10)) + '_' + dateTime +"_AdvLoss.pth"  
-        # This model is not retrained, but trained from scratch
-        model = resnet12(use_fc=n_use_fc, num_classes=num_classes).to(DEVICE)
+    # Stable models https://pytorch.org/vision/stable/models.html   # Top 1, Accuracy
+    #NetModel = efficientnet_b7(pretrained=True)                 # 84.122, 66.3M   
+    
+    model, modelName = createModel(args.model, args.pretrained)        
+    modelName += args.dataset + '_' + args.mode + '_' + str(int(args.alpha*10)) + '_' + dateTime +"_AdvLoss.pth" 
         
     model = model.to(DEVICE)
     print("Saving model as", modelName)
@@ -654,6 +676,7 @@ if __name__=='__main__':
         few_shot_classifier = PrototypicalNetworksNovelty(model, use_normcorr=3).to(DEVICE)
         print("Use prototypical network with euclidian distance to train and validate")
     
+    #%% Classic or episodic training of model
     best_scatter_between = 0
     best_loss = 0
     if args.mode == 'classic':
@@ -682,6 +705,8 @@ if __name__=='__main__':
                                                                                                       evaluateCluster=eval_cluster)
         few_shot_classifier.load_state_dict(best_state)
     
+
+    #%% Evaluation on test dataset
     test_set = FewShotDataset(split="test", image_size=image_size, root=dataDir, training=False)
     if eval_cluster:
         test_loader = DataLoader(
@@ -695,7 +720,7 @@ if __name__=='__main__':
         model.set_use_fc(False)
         model.eval()
         testRIscore, testSCscore = evaluateClustering(model, test_loader, DEVICE, test_classes) # RI score
-        saveFSLArgs(modelName, args, best_epoch, best_accuracy, testRIscore, testSCscore, best_scatter_between, best_loss)
+        saveClusterArgs(modelName, args, best_epoch, best_accuracy, testRIscore, testSCscore, best_scatter_between, best_loss)
         textLine = f"Cluster score valRI/testRI,testSC : {(100 * best_accuracy):.2f}%/{(100 * testRIscore):.2f}%,{(100 * testSCscore):.2f}%," + args.model + "," + args.dataset 
     else:
         test_sampler = TaskSampler(

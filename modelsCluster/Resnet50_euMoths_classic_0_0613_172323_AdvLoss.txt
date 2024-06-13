@@ -1,0 +1,2 @@
+model,dataset,mode,cosine,epochs,m1,m2,slossFunc,alpha,cluster,pretrained,learnRate,device,trainTasks,valTasks,batch,way,shot,query,bestEpoch,valRIscore,testRIscore,testSCscore,meanBetween,trainLoss,modelName
+resnet50,euMoths,classic,False,200,80,160,Multi,0.0,True,True,0.001,cuda:1,300,100,250,30,5,6,165,0.6818181818181818,0.4228811249398801,0.6054054054054054,0,2.1126394271850586,./modelsAdv/Resnet50_euMoths_classic_0_0613_172323_AdvLoss.pth

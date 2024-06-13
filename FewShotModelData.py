@@ -23,15 +23,20 @@ class EmbeddingsModel(nn.Module):
         model,
         num_classes: int=1000,
         use_softmax: bool=False,
-        use_fc: bool=False
+        use_fc: bool=False,
+        modelName: str="resnet"
         ):
         super().__init__()
         self.use_fc = use_fc
         self.use_sm = use_softmax
         self.model_ft = model 
         self.num_classes = num_classes
-        self.in_features = self.model_ft.fc.in_features # ResNet
-        #self.in_features = 1792 # EfficientNetB4
+        if "resnet" in modelName:
+            self.in_features = self.model_ft.fc.in_features # ResNet
+        if "B3" in modelName: 
+          self.in_features = 1536 # EfficientNetB3
+        if "B4" in modelName: 
+          self.in_features = 1792 # EfficientNetB4
         # Only used when self.use_fc is True
         self.fc = nn.Linear(self.in_features, self.num_classes) # ResNet
         #self.classifier = nn.Linear(self.in_features, self.num_classes) # EfficientNet
