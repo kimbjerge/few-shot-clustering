@@ -30,6 +30,7 @@ from torch.optim import SGD, Adam, Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.tensorboard import SummaryWriter
 
+from torchvision import transforms
 from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models import resnet34, ResNet34_Weights
 from torchvision.models import resnet18, ResNet18_Weights
@@ -42,6 +43,8 @@ from sklearn.metrics.cluster import adjusted_rand_score
 #from torchvision.models.efficientnet import efficientnet_b7 #, EfficientNet_B7_Weights
 
 from FewShotModelData import EmbeddingsModel, FewShotDataset
+
+IMAGENET_NORMALIZATION = {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}
 
 def evaluateClustering(embeddings_model, val_loader, device, test_classes):
     
@@ -389,6 +392,7 @@ def saveArgs(modelName, args, best_epoch, valAccuracy, testAccuracy, scatterBetw
     with open(modelName.replace('.pth', '.txt'), 'w') as f:
         line = "model,dataset,mode,cosine,epochs,m1,m2,slossFunc,alpha,cluster,pretrained,learnRate,device,trainTasks,"
         line += "valTasks,batch,way,shot,query,bestEpoch,valScore,testScore,meanBetween,trainLoss,modelName\n"
+        print(line)
         f.write(line)
         line = args.model + ','
         line += args.dataset + ','
@@ -476,9 +480,34 @@ if __name__=='__main__':
     n_tasks_per_epoch = args.tasks
     n_validation_tasks = args.valTasks
     n_test_tasks = 200
+    
+    # Default for FSL
+    transform = transforms.Compose(
+            [
+                transforms.RandomResizedCrop(image_size),
+                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomAffine(40, scale=(.85, 1.15), shear=0), # Added and different from FSL
+                transforms.ToTensor(),
+                transforms.Normalize(**IMAGENET_NORMALIZATION),
+            ]
+        )
+    # Settings for training moths order classifier
+    # transform = transforms.Compose(
+    #         [
+    #             transforms.RandomResizedCrop(image_size),
+    #             transforms.RandomAffine(40, scale=(.85, 1.15), shear=0),
+    #             transforms.RandomHorizontalFlip(),
+    #             transforms.RandomVerticalFlip(),
+    #             transforms.RandomPerspective(distortion_scale=0.2),
+    #             transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+    #             transforms.ToTensor(),
+    #             transforms.Normalize(**IMAGENET_NORMALIZATION),
+    #         ]
+    #     )
    
     # Training dataset
-    train_set = FewShotDataset(split="train",  image_size=image_size, root=dataDir, training=True)    
+    train_set = FewShotDataset(split="train",  image_size=image_size, root=dataDir, training=True, transform=transform)    
     if args.mode == 'classic':
         train_loader = DataLoader(
             train_set,
