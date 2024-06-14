@@ -543,10 +543,10 @@ if __name__=='__main__':
         if args.dataset == 'Omniglot':
             image_size = 28 # Omniglot dataset
             
-    #if args.model == "effB3":
-    #    image_size = 300
-    #if args.model == "effB4":
-    #    image_size = 380 
+    if args.model == "effB3":
+        image_size = 300
+    if args.model == "effB4":
+        image_size = 380 
             
     #image_size = 600 # EfficientNet B7
         
