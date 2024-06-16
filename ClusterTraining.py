@@ -509,7 +509,7 @@ def saveClusterArgs(modelName, args, best_epoch, valRIscore, testRIscore, testSC
 if __name__=='__main__':
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='resnet50') #resnet12, resnet18, resnet34, resnet50, effB3, effB4
+    parser.add_argument('--model', default='resnet50') #resnet12, resnet18, resnet34, resnet50, effB3, effB4 (EfficientNet)
     parser.add_argument('--dataset', default='euMoths') #euMoths, CUB, Omniglot (resnet12), mini_imagenet
     parser.add_argument('--mode', default='episodic') # classic, episodic
     parser.add_argument('--cosine', default='', type=bool) # default use Euclidian distance when no parameter ''
@@ -575,7 +575,6 @@ if __name__=='__main__':
                 transforms.RandomResizedCrop(image_size),
                 transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
                 transforms.RandomHorizontalFlip(),
-                #transforms.RandomAffine(40, scale=(.85, 1.15), shear=0), # Added and different from FSL
                 transforms.ToTensor(),
                 transforms.Normalize(**IMAGENET_NORMALIZATION),
             ]
@@ -688,7 +687,7 @@ if __name__=='__main__':
                                                                                test_classes=test_classes,
                                                                                evaluateCluster=eval_cluster)
         model.set_use_fc(False)       
-        model.load_state_dict(best_state)
+        #model.load_state_dict(best_state)
 
     if args.mode == 'episodic':
         print("Episodic training epochs", n_epochs)
@@ -703,10 +702,15 @@ if __name__=='__main__':
                                                                                                       pretrained=args.pretrained,
                                                                                                       test_classes=test_classes,
                                                                                                       evaluateCluster=eval_cluster)
-        few_shot_classifier.load_state_dict(best_state)
+        #few_shot_classifier.load_state_dict(best_state)
     
 
     #%% Evaluation on test dataset
+    print('Using best saved model weights', modelName)
+    modelSaved = torch.load(modelName, map_location=torch.device(DEVICE))
+    model.load_state_dict(modelSaved.state_dict())
+    few_shot_classifier.backbone.load_state_dict(modelSaved.state_dict())
+        
     test_set = FewShotDataset(split="test", image_size=image_size, root=dataDir, training=False)
     if eval_cluster:
         test_loader = DataLoader(
