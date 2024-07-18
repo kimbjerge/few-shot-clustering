@@ -6,6 +6,7 @@ at https://github.com/jakesnell/prototypical-networks
 import torch
 
 from torch import Tensor
+from torch import nn
 import matplotlib.pyplot as plt
 
 from easyfsl.methods import FewShotClassifier
@@ -153,6 +154,64 @@ class PrototypicalNetworksNovelty(FewShotClassifier):
         
         return scatterWithinSum, scatterBetweenSum, scatterLoss
     
+    
+    def tripleMarginDistanceLoss(self, dist_scores, labels, margin=1.0):
+        
+        k_way = len(self.prototypes)
+        #n_shot = int(len(self.support_labels)/k_way)
+        #q_query = int(len(self.query_features)/n_shot)
+        q_len = len(dist_scores)
+
+        tripleLoss = 0
+        for i in range(q_len):
+            scores = dist_scores[i]
+            positive = scores[labels[i]]
+            negative = (sum(scores) - positive)/(k_way-1)
+            # tLoss = max(positive - negative + margin, 0) # Euclidian distance
+            tLoss = (margin - positive) + negative # Cosine similarity
+            tripleLoss += tLoss
+                      
+        return tripleLoss/q_len
+    
+    # Not good
+    # def tripleMarginDistanceLoss(self, dist_scores, labels, margin=1.0):
+        
+    #     k_way = len(self.prototypes)
+    #     #n_shot = int(len(self.support_labels)/k_way)
+    #     #q_query = int(len(self.query_features)/n_shot)
+    #     q_len = len(dist_scores)
+
+    #     tripleLoss = 0
+    #     for i in range(q_len):
+    #         scores = dist_scores[i]
+    #         positive = scores[labels[i]]
+    #         negative = (sum(scores) - positive)/(k_way-1)
+    #         tLoss = max(positive - negative + margin, 0)
+    #         tripleLoss += tLoss
+                      
+    #     return tripleLoss/q_len
+
+    # def contrastiveLoss(self, query, labels):
+    
+    # def tripleMarginDistanceLoss(self, labels):
+        
+    #     num_centers = len(self.prototypes)
+    #     center_points = self.prototypes
+    #     support_labels = self.support_labels
+    #     n_shot = int(len(support_labels)/num_centers)
+    #     query = self.query_features
+
+    #     tripleLoss = 0
+    #     for i in range(num_centers-1):
+    #         anchor = center_points[i]
+    #         label = support_labels[i*n_shot]
+    #         positive = query[labels == label]
+    #         negative = query[labels != label]
+    #         triplet_loss = nn.TripletMarginWithDistanceLoss(distance_function=nn.PairwiseDistance(), margin=10)
+    #         tloss = triplet_loss(anchor, positive, negative)
+    #         tripleLoss += tloss
+            
+    #     return tripleLoss/num_centers
       
     @staticmethod
     def is_transductive() -> bool:

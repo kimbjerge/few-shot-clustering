@@ -215,9 +215,12 @@ def train_episodic_epoch(lossFunction,
 
             classification_scores = model(query_images.to(DEVICE))
             
-            closs = lossFunction(classification_scores, query_labels.to(DEVICE))
+            if slossFunc == "Triple": 
+                closs = model.tripleMarginDistanceLoss(classification_scores, query_labels.to(DEVICE), margin=1.0) #10
+            else:
+                closs = lossFunction(classification_scores, query_labels.to(DEVICE))
 
-            if slossFunc == "Multi" or slossFunc == "MultiAlt":
+            if slossFunc == "Multi" or slossFunc == "MultiAlt" or slossFunc == "Triple":
                 ScatterBetween, ScatterWithin, sloss = model.multivariantScatterLoss()
                 if slossFunc == "MultiAlt":
                     sloss = 100000/ScatterBetween   
@@ -340,7 +343,7 @@ def episodicTrain(model, modelName, train_loader, val_loader, few_shot_classifie
         
         if evaluateCluster:
             RIscore, SCscore = evaluateClustering(
-                model, val_loader, device=DEVICE, test_classes=test_classes
+                few_shot_classifier.backbone, val_loader, device=DEVICE, test_classes=test_classes
             ) 
             validation_accuracy = SCscore
         else:
@@ -369,11 +372,8 @@ def episodicTrain(model, modelName, train_loader, val_loader, few_shot_classifie
         train_scheduler.step()
 
     print(f"Best validation accuracy {(best_validation_accuracy):.4f} with loss {(best_loss):.4f} after epochs", best_epoch)
-
-    if evaluateCluster:
-        return best_state, model, best_epoch, best_validation_accuracy, best_scatter_between, best_loss
-    else:
-        return best_state, few_shot_classifier, best_epoch, best_validation_accuracy, best_scatter_between, best_loss
+       
+    return best_state, few_shot_classifier.backbone, best_epoch, best_validation_accuracy, best_scatter_between, best_loss
 
 
 #%% Few shot testing of model        
@@ -516,14 +516,14 @@ if __name__=='__main__':
     parser.add_argument('--epochs', default=10, type=int) # epochs
     parser.add_argument('--m1', default=3, type=int) # learning rate scheduler for milstone 1 (epochs)
     parser.add_argument('--m2', default=6, type=int) # learning rate scheduler for rate milstone 2 (epochs)
-    parser.add_argument('--slossFunc', default='Multi') # scatter loss function with variance (Var), standard deviation (Std) or only mean (Mean), multivariate (Multi)
-    parser.add_argument('--alpha', default=0.5, type=float) # alpha parameter for sloss function (0-1)
+    parser.add_argument('--slossFunc', default='Triple') # scatter loss function with variance (Var), standard deviation (Std) or only mean (Mean), multivariate (Multi), triple + multivariant (Triple)
+    parser.add_argument('--alpha', default=0.0, type=float) # alpha parameter for sloss function (0-1)
     parser.add_argument('--pretrained', default='', type=bool) # default pretrained weigts is false ''
-    parser.add_argument('--device', default='cuda:0') # training on cpu or cuda:0-3
+    parser.add_argument('--device', default='cuda:1') # training on cpu or cuda:0-3
     parser.add_argument('--tasks', default='250', type=int) # training tasks per epoch (*6 queries)
     parser.add_argument('--valTasks', default='100', type=int) # tasks used for validation
     parser.add_argument('--batch', default='250', type=int) # training batch size
-    parser.add_argument('--way', default='30', type=int) # k-Ways for episodic training and few-shot validation
+    parser.add_argument('--way', default='5', type=int) # k-Ways for episodic training and few-shot validation
     parser.add_argument('--query', default='6', type=int) # n-Query for episodic training and few-shot validation
     parser.add_argument('--learnRate', default='0.001', type=float) # learn rate for episodic and classic training
     parser.add_argument('--shot', default='5', type=int) # n-shot for episodic training and few-shot validation
