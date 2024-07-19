@@ -215,8 +215,9 @@ def train_episodic_epoch(lossFunction,
 
             classification_scores = model(query_images.to(DEVICE))
             
-            if slossFunc == "Triple": 
-                closs = model.tripleMarginDistanceLoss(classification_scores, query_labels.to(DEVICE), margin=1.0) #10
+            if slossFunc == "Triple": # These training methods do not work
+                #closs = model.tripleMarginDistanceLoss(classification_scores, query_labels.to(DEVICE), margin=1.0) #10
+                closs = model.contrastiveLoss(classification_scores, query_labels.to(DEVICE))
             else:
                 closs = lossFunction(classification_scores, query_labels.to(DEVICE))
 
@@ -259,6 +260,7 @@ def train_episodic_epoch(lossFunction,
             optimizer.step()
 
             all_loss.append(loss.item())
+            #all_closs.append(closs)
             all_closs.append(closs.item())
             all_sloss.append(sloss.item())
             all_scatter_between.append(ScatterBetween.item())
@@ -516,10 +518,10 @@ if __name__=='__main__':
     parser.add_argument('--epochs', default=10, type=int) # epochs
     parser.add_argument('--m1', default=3, type=int) # learning rate scheduler for milstone 1 (epochs)
     parser.add_argument('--m2', default=6, type=int) # learning rate scheduler for rate milstone 2 (epochs)
-    parser.add_argument('--slossFunc', default='Triple') # scatter loss function with variance (Var), standard deviation (Std) or only mean (Mean), multivariate (Multi), triple + multivariant (Triple)
+    parser.add_argument('--slossFunc', default='Multi') # scatter loss function with variance (Var), standard deviation (Std) or only mean (Mean), multivariate (Multi), triple + multivariant (Triple)
     parser.add_argument('--alpha', default=0.0, type=float) # alpha parameter for sloss function (0-1)
     parser.add_argument('--pretrained', default='', type=bool) # default pretrained weigts is false ''
-    parser.add_argument('--device', default='cuda:1') # training on cpu or cuda:0-3
+    parser.add_argument('--device', default='cpu') # training on cpu or cuda:0-3
     parser.add_argument('--tasks', default='250', type=int) # training tasks per epoch (*6 queries)
     parser.add_argument('--valTasks', default='100', type=int) # tasks used for validation
     parser.add_argument('--batch', default='250', type=int) # training batch size

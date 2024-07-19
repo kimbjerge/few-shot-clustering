@@ -7,6 +7,7 @@ import torch
 
 from torch import Tensor
 from torch import nn
+import math
 import matplotlib.pyplot as plt
 
 from easyfsl.methods import FewShotClassifier
@@ -154,26 +155,83 @@ class PrototypicalNetworksNovelty(FewShotClassifier):
         
         return scatterWithinSum, scatterBetweenSum, scatterLoss
     
+    # Not good 5.
+    def contrastiveLoss(self, dist_scores, labels, temperature=1.0):
+          
+        #k_way = len(self.prototypes)
+        q_len = len(dist_scores)
+        softmax = nn.Softmax()
+
+        contrastiveL = 0        
+        for i in range(q_len):
+            scores = dist_scores[i]
+            smax = softmax(scores)
+            positive = -math.log(smax[labels[i]])
+            contrastiveL += positive
+            
+        return contrastiveL/q_len
     
+    # Not good 4.
+    # def contrastiveLoss(self, dist_scores, labels, temperature=1.0):
+          
+    #     #k_way = len(self.prototypes)
+    #     q_len = len(dist_scores)
+
+    #     contrastiveL = 0        
+    #     for i in range(q_len):
+    #         scores = dist_scores[i]
+    #         numerator = math.exp(scores[labels[i]]/temperature) # Numerator
+    #         denominator = 0
+    #         for j in range(len(scores)):
+    #             if j != labels[i]:
+    #                 denominator += math.exp(scores[j]/temperature)
+    #         conLoss = -math.log(numerator/denominator)
+    #         contrastiveL += conLoss
+        
+    #     contrastiveL = contrastiveL/q_len
+         
+    #     return contrastiveL
+    
+    
+    # Not good 3.
     def tripleMarginDistanceLoss(self, dist_scores, labels, margin=1.0):
         
         k_way = len(self.prototypes)
-        #n_shot = int(len(self.support_labels)/k_way)
-        #q_query = int(len(self.query_features)/n_shot)
         q_len = len(dist_scores)
 
-        tripleLoss = 0
+        positive = 0
+        negative = 0
         for i in range(q_len):
             scores = dist_scores[i]
-            positive = scores[labels[i]]
-            negative = (sum(scores) - positive)/(k_way-1)
-            # tLoss = max(positive - negative + margin, 0) # Euclidian distance
-            tLoss = (margin - positive) + negative # Cosine similarity
-            tripleLoss += tLoss
-                      
-        return tripleLoss/q_len
+            positive += scores[labels[i]]
+            negative += (sum(scores) - scores[labels[i]])/(k_way-1)
+         
+        positive = positive/q_len # Mean of positive 
+        negative = negative/q_len # Mean of negative
+        tripleLoss = (margin - positive) + negative # Contrastive losss        
+        return tripleLoss
     
-    # Not good
+    # Not good 2.
+    # def tripleMarginDistanceLoss(self, dist_scores, labels, margin=1.0):
+        
+    #     k_way = len(self.prototypes)
+    #     #n_shot = int(len(self.support_labels)/k_way)
+    #     #q_query = int(len(self.query_features)/n_shot)
+    #     q_len = len(dist_scores)
+
+    #     tripleLoss = 0
+    #     for i in range(q_len):
+    #         scores = dist_scores[i]
+    #         positive = scores[labels[i]]
+    #         negative = (sum(scores) - positive)/(k_way-1)
+    #         # tLoss = max(positive - negative + margin, 0) # Euclidian distance
+    #         tLoss = (margin - positive) + negative # Cosine similarity
+    #         #tripleLoss += (margin - positive)
+    #         tripleLoss = tLoss
+                      
+    #     return tripleLoss/q_len
+    
+    # Not good 1. 
     # def tripleMarginDistanceLoss(self, dist_scores, labels, margin=1.0):
         
     #     k_way = len(self.prototypes)
