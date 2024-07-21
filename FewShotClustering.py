@@ -25,7 +25,8 @@ from FewShotModelData import EmbeddingsModel, FewShotDataset
 from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models import resnet34, ResNet34_Weights
 from torchvision.models import resnet18, ResNet18_Weights
-
+from torchvision.models.efficientnet import efficientnet_b3, EfficientNet_B3_Weights
+from torchvision.models.efficientnet import efficientnet_b4, EfficientNet_B4_Weights
 
 #%% K-means cluster evaluation - similar class (SC) score and rand index (RI) score     
 def computeSimilarClassScore(labels, predictions):
@@ -66,6 +67,16 @@ def evaluateClustering(embeddings_model, val_loader, device, test_classes):
 
 def load_model(modelName, num_classes, argsModel, argsWeights):
     
+    if argsModel == 'EfficientNetB3':
+        print('EfficientNetB3')
+        NetModel = efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1) # 82.00, 12.2M
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName=argsModel)
+        feat_dim = 1536
+    if argsModel == 'EfficientNetB4':
+        print('EfficientNetB4')
+        NetModel = efficientnet_b4(weights=EfficientNet_B4_Weights.IMAGENET1K_V1) # 83.38, 19.3M
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName=argsModel)
+        feat_dim = 1792
     if argsModel == 'resnet50':
         print('resnet50')
         ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
@@ -127,6 +138,13 @@ def load_test_dataset(argsDataset, argsLearning):
         else:
             test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirCUB, training=False)
             print("CUB Test dataset")
+    if argsDataset == 'tieredImagenet':
+        if argsLearning:       
+            test_set = FewShotDataset(split="val", image_size=image_size, root=dataDirTieredImageNet, training=False)
+            print("tieredImagenet Val dataset")
+        else:
+            test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirTieredImageNet, training=False)
+            print("tieredImagenet Test dataset")
     if argsDataset == 'miniImagenet':
         #test_set = MiniImageNet(root=dataDirMiniImageNet+'/images', specs_file=dataDirMiniImageNet+'/test.csv', image_size=image_size, training=False)
         #test_set = MiniImageNet(root=dataDirMiniImageNet+'/images', split="test", image_size=image_size, training=False)
@@ -154,9 +172,9 @@ if __name__=='__main__':
     parser.add_argument('--validate', default='', type=bool) #default false when no parameter (Validate or test dataset)
 
     # Theses arguments must not be changed and will be updated based on the model name
-    parser.add_argument('--model', default='') #resnet12 (Omniglot), resnet18, resnet34, resnet50, Must be empty
-    parser.add_argument('--weights', default='') #ImageNet, mini_imagenet, euMoths, CUB, Omniglot, Must be empty
-    parser.add_argument('--dataset', default='') #miniImagenet, euMoths, CUB, Omniglot, Must be empty
+    parser.add_argument('--model', default='') #resnet12 (Omniglot), resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4 Must be empty
+    parser.add_argument('--weights', default='') #ImageNet, mini_imagenet, tiered_imagenet, euMoths, CUB, Omniglot, Must be empty
+    parser.add_argument('--dataset', default='') #miniImagenet, tieredImagenet, euMoths, CUB, Omniglot, Must be empty
     parser.add_argument('--alpha', default=0.1, type=float) # No effect
         
     args = parser.parse_args()
@@ -175,6 +193,7 @@ if __name__=='__main__':
     dataDirEuMoths = "./data/euMoths"
     dataDirCUB = "./data/CUB"
     dataDirOmniglot = "./data/Omniglot"
+    dataDirTieredImageNet = "./data/tiered_imagenet"
     subDir = "test/"
 
     if os.path.exists(resDir+subDir) == False:
@@ -192,8 +211,12 @@ if __name__=='__main__':
             args.model = modelNameSplit[0].lower()
                 
             if modelNameSplit[2] == 'imagenet':
-                nameData = "miniImagenet"
-                nameWeights = "mini_imagenet"
+                if modelNameSplit[1] == 'mini':
+                    nameData = "miniImagenet"
+                    nameWeights = "mini_imagenet"
+                else:
+                    nameData = "tieredImagenet"
+                    nameWeights = "tiered_imagenet"
                 alpha_idx = 4
             else:
                 nameData = modelNameSplit[1]
@@ -212,7 +235,7 @@ if __name__=='__main__':
             if args.model == 'resnet12':
                 image_size = 28 # Omniglot dataset
             else:
-                image_size = 224 # ResNet euMoths
+                image_size = 224 # ResNet euMoths, EfficientNetB3 (300)
                           
             num_classes = 100  
             if args.weights == 'CUB':
@@ -221,6 +244,8 @@ if __name__=='__main__':
                 num_classes = 3856  
             if args.weights == 'mini_imagenet':
                 num_classes = 60
+            if args.weights == 'tiered_imagenet':
+                num_classes = 351 # Val 97
             
             dataSetName = "Test"
             if args.validate: 

@@ -511,8 +511,8 @@ def saveClusterArgs(modelName, args, best_epoch, valRIscore, testRIscore, testSC
 if __name__=='__main__':
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='resnet50') #resnet12, resnet18, resnet34, resnet50, effB3, effB4 (EfficientNet)
-    parser.add_argument('--dataset', default='euMoths') #euMoths, CUB, Omniglot (resnet12), mini_imagenet
+    parser.add_argument('--model', default='resnet50') # resnet12, resnet18, resnet34, resnet50, effB3, effB4 (EfficientNet)
+    parser.add_argument('--dataset', default='euMoths') # euMoths, CUB, Omniglot (resnet12), mini_imagenet, tiered_imagenet
     parser.add_argument('--mode', default='episodic') # classic, episodic
     parser.add_argument('--cosine', default='', type=bool) # default use Euclidian distance when no parameter ''
     parser.add_argument('--epochs', default=10, type=int) # epochs
@@ -533,7 +533,7 @@ if __name__=='__main__':
     args = parser.parse_args()
  
     dataDir = './data/' + args.dataset
-    image_size = 224 # ResNet euMoths and CUB
+    image_size = 224 # ResNet with euMoths, CUB and imagenet
     n_epochs = args.epochs # ImageNet pretrained weights - finetuning
     eval_cluster = args.cluster # Evaluate using K-means clustering on embeddings or FSL evaluation
     
@@ -546,7 +546,7 @@ if __name__=='__main__':
             image_size = 28 # Omniglot dataset
             
     if args.model == "effB3":
-        image_size = 300
+        image_size = 224 # 300
     if args.model == "effB4":
         image_size = 380 
             
