@@ -40,9 +40,9 @@ class EmbeddingsModel(nn.Module):
         if "resnet" in modelName:
             self.in_features = self.model_ft.fc.in_features # ResNet
         if "B3" in modelName: 
-            self.in_features = 1536 # EfficientNetB3
+            self.in_features = self.model_ft.classifier[1].in_features #1536 EfficientNetB3
         if "B4" in modelName: 
-            self.in_features = 1792 # EfficientNetB4
+            self.in_features = self.model_ft.classifier[1].in_features #1792 EfficientNetB4
         if "NeXt" in modelName:
             self.in_features = self.model_ft.classifier[2].in_features
         if "ViT" in modelName:
@@ -53,13 +53,14 @@ class EmbeddingsModel(nn.Module):
         #self.classifier = nn.Linear(self.in_features, self.num_classes) # EfficientNet
         self.drop = nn.Dropout(p=0.25)
         self.softmax = nn.Softmax(dim=1)
+        if "resnet" in modelName:
+            self.model_ft.fc = nn.Identity() # Do nothing just pass input to output 
+        if "eff" in modelName:
+            self.model_ft.classifier = Identity()            
         if "NeXt" in modelName:
             self.model_ft.classifier[2] = Identity()
-        else: 
-            if "ViT" in modelName:
-                self.model_ft.heads[0] = Identity()
-            else:
-                self.model_ft.fc = nn.Identity() # Do nothing just pass input to output 
+        if "ViT" in modelName:
+            self.model_ft.heads[0] = Identity()
         
     def forward(self, x: Tensor) -> Tensor:
         x = self.model_ft(x)   

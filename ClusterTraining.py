@@ -396,25 +396,25 @@ def createModel(argsModel, argsPretrained):
         print('ViT-B-16')
         NetModel = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
         modelName = "./modelsAdv/ViTB16_"
-        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=argsModel)
 
     if argsModel == 'ConvNeXt':
         print('ConvNeXt Base')
         NetModel = convnext_base(weights=ConvNeXt_Base_Weights.IMAGENET1K_V1)
         modelName = "./modelsAdv/ConvNeXt_"
-        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=argsModel)
 
     if argsModel == 'effB3':
         print('EfficientNetB3')
         NetModel = efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1) # 82.00, 12.2M
         modelName = "./modelsAdv/EfficientNetB3_"
-        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=argsModel)
 
     if argsModel == 'effB4':
         print('EfficientNetB4')
         NetModel = efficientnet_b4(weights=EfficientNet_B4_Weights.IMAGENET1K_V1) # 83.38, 19.3M
         modelName = "./modelsAdv/EfficientNetB4_"
-        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=argsModel)
         
     if argsModel == 'resnet50':
         print('resnet50')
@@ -527,9 +527,9 @@ def saveClusterArgs(modelName, args, best_epoch, valRIscore, testRIscore, testSC
 if __name__=='__main__':
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='ViTB16') # resnet12, resnet18, resnet34, resnet50, effB3, effB4 (EfficientNet), ConvNeXt, ViTB16
+    parser.add_argument('--model', default='effB3') # resnet12, resnet18, resnet34, resnet50, effB3, effB4 (EfficientNet), ConvNeXt, ViTB16
     parser.add_argument('--dataset', default='euMoths') # euMoths, CUB, Omniglot (resnet12), mini_imagenet, tiered_imagenet
-    parser.add_argument('--mode', default='episodic') # classic, episodic
+    parser.add_argument('--mode', default='classic') # classic, episodic
     parser.add_argument('--cosine', default='', type=bool) # default use Euclidian distance when no parameter ''
     parser.add_argument('--epochs', default=10, type=int) # epochs
     parser.add_argument('--m1', default=3, type=int) # learning rate scheduler for milstone 1 (epochs)
