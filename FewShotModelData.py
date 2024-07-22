@@ -15,7 +15,13 @@ from pathlib import Path
 from torch import nn, Tensor
 from easyfsl.datasets import EasySet
 
-
+class Identity(nn.Module):
+    def __init__(self):
+        super(Identity, self).__init__()
+        
+    def forward(self, x):
+        return x
+    
 # Define EmbeddingsModel by parameter model and skip fc layers
 class EmbeddingsModel(nn.Module):
     def __init__(
@@ -34,15 +40,26 @@ class EmbeddingsModel(nn.Module):
         if "resnet" in modelName:
             self.in_features = self.model_ft.fc.in_features # ResNet
         if "B3" in modelName: 
-          self.in_features = 1536 # EfficientNetB3
+            self.in_features = 1536 # EfficientNetB3
         if "B4" in modelName: 
-          self.in_features = 1792 # EfficientNetB4
+            self.in_features = 1792 # EfficientNetB4
+        if "NeXt" in modelName:
+            self.in_features = self.model_ft.classifier[2].in_features
+        if "ViT" in modelName:
+            self.in_features = self.model_ft.heads[0].in_features
+                     
         # Only used when self.use_fc is True
         self.fc = nn.Linear(self.in_features, self.num_classes) # ResNet
         #self.classifier = nn.Linear(self.in_features, self.num_classes) # EfficientNet
         self.drop = nn.Dropout(p=0.25)
         self.softmax = nn.Softmax(dim=1)
-        self.model_ft.fc = nn.Identity() # Do nothing just pass input to output 
+        if "NeXt" in modelName:
+            self.model_ft.classifier[2] = Identity()
+        else: 
+            if "ViT" in modelName:
+                self.model_ft.heads[0] = Identity()
+            else:
+                self.model_ft.fc = nn.Identity() # Do nothing just pass input to output 
         
     def forward(self, x: Tensor) -> Tensor:
         x = self.model_ft(x)   

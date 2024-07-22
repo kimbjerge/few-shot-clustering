@@ -40,6 +40,8 @@ from statistics import mode
 
 from torchvision.models.efficientnet import efficientnet_b3, EfficientNet_B3_Weights
 from torchvision.models.efficientnet import efficientnet_b4, EfficientNet_B4_Weights
+from torchvision.models import convnext_base, ConvNeXt_Base_Weights
+from torchvision.models import vit_b_16, ViT_B_16_Weights
 #from torchvision.models.efficientnet import efficientnet_b7 #, EfficientNet_B7_Weights
 
 from FewShotModelData import EmbeddingsModel, FewShotDataset
@@ -388,6 +390,18 @@ def test(model, test_loader, few_shot_classifier, n_workers, DEVICE):
 #%% Create models for training
 def createModel(argsModel, argsPretrained):
     
+    if argsModel == 'ViTB16':
+        print('ViT-B-16')
+        NetModel = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
+        modelName = "./modelsAdv/ViTB16_"
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+
+    if argsModel == 'ConvNeXt':
+        print('ConvNeXt Base')
+        NetModel = convnext_base(weights=ConvNeXt_Base_Weights.IMAGENET1K_V1)
+        modelName = "./modelsAdv/ConvNeXt_"
+        model = EmbeddingsModel(NetModel, num_classes, use_softmax=False, use_fc=n_use_fc, modelName=args.model)
+
     if argsModel == 'effB3':
         print('EfficientNetB3')
         NetModel = efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1) # 82.00, 12.2M
@@ -511,7 +525,7 @@ def saveClusterArgs(modelName, args, best_epoch, valRIscore, testRIscore, testSC
 if __name__=='__main__':
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='resnet50') # resnet12, resnet18, resnet34, resnet50, effB3, effB4 (EfficientNet)
+    parser.add_argument('--model', default='ViTB16') # resnet12, resnet18, resnet34, resnet50, effB3, effB4 (EfficientNet), ConvNeXt, ViTB16
     parser.add_argument('--dataset', default='euMoths') # euMoths, CUB, Omniglot (resnet12), mini_imagenet, tiered_imagenet
     parser.add_argument('--mode', default='episodic') # classic, episodic
     parser.add_argument('--cosine', default='', type=bool) # default use Euclidian distance when no parameter ''

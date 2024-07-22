@@ -27,6 +27,8 @@ from torchvision.models import resnet34, ResNet34_Weights
 from torchvision.models import resnet18, ResNet18_Weights
 from torchvision.models.efficientnet import efficientnet_b3, EfficientNet_B3_Weights
 from torchvision.models.efficientnet import efficientnet_b4, EfficientNet_B4_Weights
+from torchvision.models import convnext_base, ConvNeXt_Base_Weights
+from torchvision.models import vit_b_16, ViT_B_16_Weights
 
 #%% K-means cluster evaluation - similar class (SC) score and rand index (RI) score     
 def computeSimilarClassScore(labels, predictions):
@@ -67,15 +69,25 @@ def evaluateClustering(embeddings_model, val_loader, device, test_classes):
 
 def load_model(modelName, num_classes, argsModel, argsWeights):
     
-    if argsModel == 'EfficientNetB3':
+    if argsModel == 'vitb16':
+        print('ViT-B-16')
+        NetModel = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="ViTB16")
+        feat_dim = 768
+    if argsModel == 'convnext':
+        print('ConvNeXt Base')
+        NetModel = convnext_base(weights=ConvNeXt_Base_Weights.IMAGENET1K_V1)
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="ConvNeXt")
+        feat_dim = 1024
+    if argsModel == 'efficientnetb3':
         print('EfficientNetB3')
         NetModel = efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1) # 82.00, 12.2M
-        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName=argsModel)
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="effB3")
         feat_dim = 1536
-    if argsModel == 'EfficientNetB4':
+    if argsModel == 'efficientnetb4':
         print('EfficientNetB4')
         NetModel = efficientnet_b4(weights=EfficientNet_B4_Weights.IMAGENET1K_V1) # 83.38, 19.3M
-        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName=argsModel)
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="effB4")
         feat_dim = 1792
     if argsModel == 'resnet50':
         print('resnet50')
@@ -172,7 +184,7 @@ if __name__=='__main__':
     parser.add_argument('--validate', default='', type=bool) #default false when no parameter (Validate or test dataset)
 
     # Theses arguments must not be changed and will be updated based on the model name
-    parser.add_argument('--model', default='') #resnet12 (Omniglot), resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4 Must be empty
+    parser.add_argument('--model', default='') #resnet12 (Omniglot), resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4, ConvNeXt, ViTB16 Must be empty
     parser.add_argument('--weights', default='') #ImageNet, mini_imagenet, tiered_imagenet, euMoths, CUB, Omniglot, Must be empty
     parser.add_argument('--dataset', default='') #miniImagenet, tieredImagenet, euMoths, CUB, Omniglot, Must be empty
     parser.add_argument('--alpha', default=0.1, type=float) # No effect
@@ -235,7 +247,7 @@ if __name__=='__main__':
             if args.model == 'resnet12':
                 image_size = 28 # Omniglot dataset
             else:
-                image_size = 224 # ResNet euMoths, EfficientNetB3 (300)
+                image_size = 224 # ResNet euMoths, EfficientNetB3 (300), ConvNeXt
                           
             num_classes = 100  
             if args.weights == 'CUB':
