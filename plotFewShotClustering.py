@@ -58,4 +58,6 @@ if __name__=='__main__':
     data_df = pd.read_csv("./result/clustering/efficientnetb3_euMoths_cluster_test.txt")
     plotClusterScore(data_df, "(EfficientNetB3, EU Moths)")
     
+    data_df = pd.read_csv("./result/clustering/convnext_euMoths_cluster_test.txt")
+    plotClusterScore(data_df, "(ConvNeXt, EU Moths)")
     

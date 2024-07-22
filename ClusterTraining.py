@@ -38,6 +38,8 @@ from sklearn.cluster import KMeans
 from sklearn.metrics.cluster import adjusted_rand_score
 from statistics import mode
 
+# See performance on ImageNet: https://pytorch.org/vision/0.18/models.html
+
 from torchvision.models.efficientnet import efficientnet_b3, EfficientNet_B3_Weights
 from torchvision.models.efficientnet import efficientnet_b4, EfficientNet_B4_Weights
 from torchvision.models import convnext_base, ConvNeXt_Base_Weights
