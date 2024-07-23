@@ -41,18 +41,18 @@ if __name__=='__main__':
     # Fields "ModelDir,Model,TrainMethod,Dataset,ValTest,BatchSize,Classes,RIscore,SCscore,Alpha,ModelName\n"
     
     index = 1
-    data_df = pd.read_csv("./result/clustering/resnet50_euMoths_modelsRes50_" + str(index) + "_cluster_test.txt")
+    #data_df = pd.read_csv("./result/clustering/resnet50_euMoths_modelsRes50_" + str(index) + "_cluster_test.txt")
+    #data_df = pd.read_csv("./result/clustering/resnet50_euMoths_cluster_validate.txt")
+    data_df = pd.read_csv("./result/clustering/resnet50_euMoths_cluster_test.txt")
     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(ResNet50, EU Moths)")
-    #data_df = pd.read_csv("./result/clustering/resnet50_euMoths_cluster_test.txt")
-    #data_df = pd.read_csv("./result/clustering/resnet50_euMoths_modelsRes50_1_cluster_validate.txt")
 
 
     data_df = pd.read_csv("./result/clustering/resnet50_miniImagenet_cluster_test.txt")
     plotClusterScore(data_df, "(ResNet50, Mini)")
     data_df = pd.read_csv("./result/clustering/resnet50_CUB_cluster_test.txt")
     plotClusterScore(data_df, "(ResNet50, CUB)")
-    data_df = pd.read_csv("./result/clustering/resnet50_tiered_imagenet_cluster_test.txt")
+    data_df = pd.read_csv("./result/clustering/resnet50_tieredImagenet_cluster_test.txt")
     plotClusterScore(data_df, "(ResNet50, Tiered)")
 
     data_df = pd.read_csv("./result/clustering/efficientnetb3_euMoths_cluster_test.txt")
