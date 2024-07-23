@@ -56,8 +56,14 @@ if __name__=='__main__':
     plotClusterScore(data_df, "(ResNet50, Tiered)")
 
     data_df = pd.read_csv("./result/clustering/efficientnetb3_euMoths_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(EfficientNetB3, EU Moths)")
     
     data_df = pd.read_csv("./result/clustering/convnext_euMoths_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(ConvNeXt, EU Moths)")
+
+    data_df = pd.read_csv("./result/clustering/vitb16_euMoths_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterScore(data_df, "(ViT-B-16, EU Moths)")
     

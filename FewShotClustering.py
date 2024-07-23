@@ -214,8 +214,13 @@ if __name__=='__main__':
  
     DEVICE = args.device
 
+    modelsInDir = []
+    if args.modelDir == "":
+        modelsInDir.append(args.model + '_' + args.dataset + '_classic_0_1234_123456.pth') # Create model name 
+    else:
+        modelsInDir = sorted(os.listdir(args.modelDir))
     #%% Create model and prepare for cluster testing
-    for modelName in sorted(os.listdir(args.modelDir)):
+    for modelName in modelsInDir:
         if '.pth' in modelName:
         #if 'Resnet34_mini_imagenet_episodic_5_1116_141355_AdvLoss.pth' in modelName:
             modelNameSplit = modelName.split('_')
@@ -236,7 +241,8 @@ if __name__=='__main__':
                 alpha_idx = 3
                 
             #if args.weights == '':
-            args.weights = nameWeights
+            if args.modelDir != "":
+                args.weights = nameWeights
             #if args.dataset == '':
             args.dataset = nameData
 
@@ -297,6 +303,8 @@ if __name__=='__main__':
 
             #%% Save results
             trainMethod = modelName.split('_')[2] # Classic or episodic
+            if trainMethod == "imagenet": # Mini and Tiered imagenet 
+                trainMethod = modelName.split('_')[3] # Classic or episodic                
             line = args.modelDir + ',' + args.model + ',' + trainMethod + ',' + args.dataset + ',' + dataSetName + ',' + str(args.batch) + ',' + str(test_classes) + ',' 
             line += str(RIscore) + ',' + str(SCscore)  + ','
             line += str(args.alpha) + ',' + args.modelDir + '/' + modelName +  '\n'
