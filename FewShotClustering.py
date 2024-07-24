@@ -12,7 +12,7 @@ import torch
 import argparse
 from statistics import mode
 from sklearn.cluster import KMeans
-from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.cluster import adjusted_rand_score, adjusted_mutual_info_score, normalized_mutual_info_score
 
 from torch.utils.data import DataLoader
 
@@ -62,10 +62,15 @@ def evaluateClustering(embeddings_model, val_loader, device, test_classes):
     kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
     predictions_all = kmeans.fit(features_all).predict(features_all)
     RIscore = adjusted_rand_score(np.array(labels_all), predictions_all)
+    MIscore = adjusted_mutual_info_score(np.array(labels_all), predictions_all)
+    NMIscore = normalized_mutual_info_score(np.array(labels_all), predictions_all)
     SCscore = computeSimilarClassScore(np.array(labels_all), predictions_all)
-    print("Rand index (RI) score",  RIscore, "Similar class (SC) score", SCscore, "for classes", str(test_classes))
+    print("Adjusted Rand Index (RI) score",  RIscore, 
+          "Adjusted Mutual Info (MI) score", MIscore,
+          "Normalized Mutual Info (MI) score", NMIscore,
+          "Similar Class (SC) score", SCscore, "for classes", str(test_classes))
     
-    return RIscore, SCscore
+    return RIscore, MIscore, NMIscore, SCscore
 
 def load_model(modelName, num_classes, argsModel, argsWeights):
     
@@ -274,7 +279,7 @@ if __name__=='__main__':
 
             #resFileName =  args.model + '_' +  args.dataset + '_' + args.modelDir + "_cluster_test.txt"
             resFileName =  args.model + '_' +  args.dataset + "_cluster_test.txt"
-            line = "ModelDir,Model,TrainMethod,Dataset,ValTest,BatchSize,Classes,RIscore,SCscore,Alpha,ModelName\n"
+            line = "ModelDir,Model,TrainMethod,Dataset,ValTest,BatchSize,Classes,RIscore,MIscore,NMIscore,SCscore,Alpha,ModelName\n"
             if os.path.exists(resDir+subDir+resFileName):
                 resFile = open(resDir+subDir+resFileName, "a")
             else:
@@ -297,7 +302,7 @@ if __name__=='__main__':
             print("Test classes", test_classes)
     
             #%% Test clustering
-            RIscore, SCscore = evaluateClustering(
+            RIscore, MIscore, NMIscore, SCscore = evaluateClustering(
                 model, test_loader, device=DEVICE, test_classes=test_classes
             ) 
 
@@ -306,7 +311,7 @@ if __name__=='__main__':
             if trainMethod == "imagenet": # Mini and Tiered imagenet 
                 trainMethod = modelName.split('_')[3] # Classic or episodic                
             line = args.modelDir + ',' + args.model + ',' + trainMethod + ',' + args.dataset + ',' + dataSetName + ',' + str(args.batch) + ',' + str(test_classes) + ',' 
-            line += str(RIscore) + ',' + str(SCscore)  + ','
+            line += str(RIscore) + ',' + str(MIscore) + ',' + str(NMIscore) + ',' + str(SCscore)  + ','
             line += str(args.alpha) + ',' + args.modelDir + '/' + modelName +  '\n'
             print(line)
             resFile.write(line)    
