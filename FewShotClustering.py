@@ -268,7 +268,7 @@ if __name__=='__main__':
             if args.weights == 'mini_imagenet':
                 num_classes = 60
             if args.weights == 'tiered_imagenet':
-                num_classes = 351 # Val 97
+                num_classes = 351 # Val 97, Test 160
             
             dataSetName = "Test"
             if args.validate: 
