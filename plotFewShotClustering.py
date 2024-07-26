@@ -9,6 +9,76 @@ import pandas as pd
 import numpy as np
 
 
+def plotClusterRIMIScoreMulti(filePaths, clusterName, text):
+
+    ax = plt.gca()
+
+    AMIscores = []
+    ARIscores = []
+    for filePath in filePaths:
+        fileName = filePath + clusterName
+        data_df = pd.read_csv(fileName)
+        data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]  
+    
+        data_df = data_df.sort_values(["Alpha"])
+        AMIscore = data_df['MIscore'].to_list()
+        if len(AMIscore) == 11:
+            AMIscores.append(AMIscore)
+        ARIscore = data_df['RIscore'].to_list()
+        if len(ARIscore) == 11:
+            ARIscores.append(ARIscore)
+        
+        data_df.plot(kind='line',
+                    x='Alpha',
+                    y='MIscore',
+                    style='.',
+                    color='green', ax=ax)
+        
+        data_df.plot(kind='line',
+                    x='Alpha',
+                    y='RIscore',
+                    style='.',
+                    color='blue', ax=ax)
+        
+    alpha = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    plt.plot(alpha, np.mean(AMIscores, 0), color="red")
+    plt.plot(alpha, np.mean(ARIscores, 0), color="orange")
+    #plt.title("Clustering score vs. alpha values (Validate dataset)")
+    plt.title("Clustering score vs. alpha " + text)
+    plt.ylabel('Score')
+    plt.xlabel('Alpha')
+    plt.ylim(0.25, 0.95) 
+    #plt.xlim(0, 20)
+    plt.legend(["AMI score", "ARI score"])
+    plt.show()
+
+
+def plotClusterRIMIScore(data_df, text):
+
+    ax = plt.gca()
+    
+    data_df = data_df.sort_values(["Alpha"])
+    
+    data_df.plot(kind='line',
+                x='Alpha',
+                y='MIscore',
+                color='green', ax=ax)
+    
+    data_df.plot(kind='line',
+                x='Alpha',
+                y='RIscore',
+                color='blue', ax=ax)
+    
+    #plt.title("Clustering score vs. alpha values (Validate dataset)")
+    plt.title("Clustering score vs. alpha " + text)
+    plt.ylabel('Score')
+    plt.xlabel('Alpha')
+    #plt.ylim(0.4, 0.8) 
+    #plt.xlim(0, 20)
+    plt.legend(["AMI score", "ARI score"])
+    plt.show()
+        
+    
 def plotClusterScore(data_df, text):
 
     ax = plt.gca()
@@ -31,9 +101,8 @@ def plotClusterScore(data_df, text):
     plt.legend(["RI score", "SC score"])
     plt.show()
         
-    
-#%% MAIN
-if __name__=='__main__':
+
+def plotFirstResults():
 
     #RIscore = []
     #alphaValues = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -41,29 +110,109 @@ if __name__=='__main__':
     # Fields "ModelDir,Model,TrainMethod,Dataset,ValTest,BatchSize,Classes,RIscore,SCscore,Alpha,ModelName\n"
     
     index = 1
-    #data_df = pd.read_csv("./result/clustering/resnet50_euMoths_modelsRes50_" + str(index) + "_cluster_test.txt")
-    #data_df = pd.read_csv("./result/clustering/resnet50_euMoths_cluster_validate.txt")
-    data_df = pd.read_csv("./result/clustering/resnet50_euMoths_cluster_test.txt")
+    #data_df = pd.read_csv("./result/clustering/first/resnet50_euMoths_modelsRes50_" + str(index) + "_cluster_test.txt")
+    #data_df = pd.read_csv("./result/clustering/first/resnet50_euMoths_cluster_validate.txt")
+    data_df = pd.read_csv("./result/clustering/first/resnet50_euMoths_cluster_test.txt")
     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(ResNet50, EU Moths)")
 
 
-    data_df = pd.read_csv("./result/clustering/resnet50_miniImagenet_cluster_test.txt")
+    data_df = pd.read_csv("./result/clustering/first/resnet50_miniImagenet_cluster_test.txt")
     plotClusterScore(data_df, "(ResNet50, Mini)")
-    data_df = pd.read_csv("./result/clustering/resnet50_CUB_cluster_test.txt")
+    data_df = pd.read_csv("./result/clustering/first/resnet50_CUB_cluster_test.txt")
     plotClusterScore(data_df, "(ResNet50, CUB)")
-    data_df = pd.read_csv("./result/clustering/resnet50_tieredImagenet_cluster_test.txt")
+    data_df = pd.read_csv("./result/clustering/first/resnet50_tieredImagenet_cluster_test.txt")
     plotClusterScore(data_df, "(ResNet50, Tiered)")
 
-    data_df = pd.read_csv("./result/clustering/efficientnetb3_euMoths_cluster_test.txt")
+    data_df = pd.read_csv("./result/clustering/first/efficientnetb3_euMoths_cluster_test.txt")
     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(EfficientNetB3, EU Moths)")
     
-    data_df = pd.read_csv("./result/clustering/convnext_euMoths_cluster_test.txt")
+    data_df = pd.read_csv("./result/clustering/first/convnext_euMoths_cluster_test.txt")
     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(ConvNeXt, EU Moths)")
 
-    data_df = pd.read_csv("./result/clustering/vitb16_euMoths_cluster_test.txt")
+    data_df = pd.read_csv("./result/clustering/first/vitb16_euMoths_cluster_test.txt")
     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(ViT-B-16, EU Moths)")
+
+def plotRandResults():
+
+    #path = "./result/clustering/rand0/"
+    #path = "./result/clustering/rand37/"
+    #path = "./result/clustering/rand74/"
+    #path = "./result/clustering/rand158/"
+    path = "./result/clustering/rand261/"
+    #plotFirstResults()
+    data_df = pd.read_csv(path + "resnet50_euMoths_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ResNet50, EU Moths)")
+
+    data_df = pd.read_csv(path + "efficientnetB3_euMoths_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(EfficientNetB3, EU Moths)")
     
+    data_df = pd.read_csv(path + "ConvNeXt_euMoths_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ConvNeXt, EU Moths)")
+    
+    data_df = pd.read_csv(path + "ViTB16_euMoths_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ViT-B-16, EU Moths)")
+    
+    data_df = pd.read_csv(path + "resnet50_CUB_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ResNet50, CUB)")
+    
+    data_df = pd.read_csv(path + "efficientnetB3_CUB_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(EfficientNetB3, CUB)")
+    
+    data_df = pd.read_csv(path + "ConvNeXt_CUB_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ConvNeXt, CUB)")
+    
+    data_df = pd.read_csv(path + "ViTB16_CUB_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ViT-B-16, CUB)")
+
+    data_df = pd.read_csv(path + "resnet50_miniImagenet_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ResNet50, Mini Imagenet)")
+    
+    data_df = pd.read_csv(path + "resnet50_tieredImagenet_cluster_test.txt")
+    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
+    plotClusterRIMIScore(data_df, "(ResNet50, Tiered Imagenet)")
+
+       
+#%% MAIN
+if __name__=='__main__':
+
+    
+    paths = ["./result/clustering/rand0/",
+             "./result/clustering/rand37/",
+             "./result/clustering/rand74/",
+             "./result/clustering/rand158/",
+             "./result/clustering/rand261/"]
+    
+    plotClusterRIMIScoreMulti(paths, "resnet50_euMoths_cluster_test.txt", 
+                              "(ResNet50, EU Moths)")
+    plotClusterRIMIScoreMulti(paths, "efficientnetB3_euMoths_cluster_test.txt", 
+                              "(EfficientNetB3, EU Moths)")
+    plotClusterRIMIScoreMulti(paths, "ConvNeXt_euMoths_cluster_test.txt", 
+                              "(ConvNeXt, EU Moths)")
+    plotClusterRIMIScoreMulti(paths, "ViTB16_euMoths_cluster_test.txt", 
+                              "(ViT-B-16, EU Moths)")
+    plotClusterRIMIScoreMulti(paths, "resnet50_CUB_cluster_test.txt", 
+                              "(ResNet50, CUB)")
+    plotClusterRIMIScoreMulti(paths, "efficientnetB3_CUB_cluster_test.txt", 
+                              "(EfficientNetB3, CUB)")
+    plotClusterRIMIScoreMulti(paths, "ConvNeXt_CUB_cluster_test.txt", 
+                              "(ConvNeXt, CUB)")
+    plotClusterRIMIScoreMulti(paths, "ViTB16_CUB_cluster_test.txt", 
+                              "(ViT-B-16, CUB)")
+    plotClusterRIMIScoreMulti(paths, "resnet50_miniImagenet_cluster_test.txt", 
+                              "(ResNet50, Mini Imagenet)")
+    plotClusterRIMIScoreMulti(paths, "resnet50_tieredImagenet_cluster_test.txt", 
+                              "(ResNet50, Tiered Imagenet)")
+
