@@ -15,9 +15,12 @@ def plotClusterRIMIScoreMulti(filePaths, clusterName, text):
 
     AMIscores = []
     ARIscores = []
+    AMIscoresClassic = []
+    ARIscoresClassic = []
     for filePath in filePaths:
         fileName = filePath + clusterName
         data_df = pd.read_csv(fileName)
+        data_df_classic = data_df.loc[data_df['TrainMethod'] == "classic"] 
         data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]  
     
         data_df = data_df.sort_values(["Alpha"])
@@ -27,6 +30,9 @@ def plotClusterRIMIScoreMulti(filePaths, clusterName, text):
         ARIscore = data_df['RIscore'].to_list()
         if len(ARIscore) == 11:
             ARIscores.append(ARIscore)
+
+        AMIscoresClassic.append(data_df_classic['MIscore'].to_list())
+        ARIscoresClassic.append(data_df_classic['RIscore'].to_list())
         
         data_df.plot(kind='line',
                     x='Alpha',
@@ -42,7 +48,9 @@ def plotClusterRIMIScoreMulti(filePaths, clusterName, text):
         
     alpha = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     plt.plot(alpha, np.mean(AMIscores, 0), color="red")
+    plt.scatter(0.1, np.mean(AMIscoresClassic), s=50, edgecolors='black', c="red")
     plt.plot(alpha, np.mean(ARIscores, 0), color="orange")
+    plt.scatter(0.1, np.mean(ARIscoresClassic), s=50, edgecolors='black', c="orange")
     #plt.title("Clustering score vs. alpha values (Validate dataset)")
     plt.title("Clustering score vs. alpha " + text)
     plt.ylabel('Score')
