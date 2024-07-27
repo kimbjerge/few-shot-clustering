@@ -39,6 +39,7 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import HDBSCAN
 from sklearn.cluster import SpectralClustering
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.cluster import adjusted_rand_score
 
 from sklearn.manifold import TSNE
@@ -148,7 +149,7 @@ if __name__=='__main__':
     parser.add_argument('--model', default='ConvNeXt') #resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4, ConvNeXt, ViTB16 
     parser.add_argument('--weights', default='euMoths') #ImageNet, euMoths, CUB
     parser.add_argument('--dataset', default='euMoths') #miniImagenet, euMoths, CUB
-    parser.add_argument('--method', default='HDBSCANClust') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, ALL
+    parser.add_argument('--method', default='Agglomerative') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, Agglomerative ALL
     args = parser.parse_args()
   
     resDir = "./result/"
@@ -345,6 +346,16 @@ if __name__=='__main__':
                                     eigen_solver='arpack',
                                     random_state=0)
             predictions_all = sc.fit_predict(features_all)  
+        
+        if args.method == 'Agglomerative':
+            ac = AgglomerativeClustering(
+                linkage="average",
+                #metric="cityblock",
+                metric="euclidean",
+                connectivity=None, # Structured none
+                n_clusters=test_classes
+            )
+            predictions_all = ac.fit_predict(features_all)  
             
         if args.method == 'DBSCANClust': #NA
             dbscan = DBSCAN(eps=0.2, metric="cosine", n_jobs=6)
