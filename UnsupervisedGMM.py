@@ -26,6 +26,10 @@ from torchvision.models import resnet18
 from torchvision.models import ResNet50_Weights
 from torchvision.models import ResNet34_Weights
 from torchvision.models import ResNet18_Weights
+from torchvision.models.efficientnet import efficientnet_b3, EfficientNet_B3_Weights
+from torchvision.models.efficientnet import efficientnet_b4, EfficientNet_B4_Weights
+from torchvision.models import convnext_base, ConvNeXt_Base_Weights
+from torchvision.models import vit_b_16, ViT_B_16_Weights
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
@@ -122,7 +126,7 @@ def computeClusterPerformance(test_classes, features_all, labels_all):
     print("HSBSCAN clustering")
     #for max_clusters in [50, None]:
         #print("Max clusters", max_clusters)
-    dbscan = HDBSCAN(min_cluster_size=2, max_cluster_size=None, store_centers='centroid')
+    dbscan = HDBSCAN(min_cluster_size=3, store_centers='centroid')
     embs = features_all / np.linalg.norm(features_all, axis=1, keepdims=True)
     dbscan.fit(embs)
     predictions_dbscan = dbscan.labels_  
@@ -141,10 +145,10 @@ if __name__=='__main__':
     plt.rcParams.update({'font.size': 12})
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='resnet50') #resnet18, resnet34, resnet50
+    parser.add_argument('--model', default='ConvNeXt') #resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4, ConvNeXt, ViTB16 
     parser.add_argument('--weights', default='euMoths') #ImageNet, euMoths, CUB
     parser.add_argument('--dataset', default='euMoths') #miniImagenet, euMoths, CUB
-    parser.add_argument('--method', default='Kmeans') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, ALL
+    parser.add_argument('--method', default='HDBSCANClust') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, ALL
     args = parser.parse_args()
   
     resDir = "./result/"
@@ -178,17 +182,38 @@ if __name__=='__main__':
     #DEVICE = "cuda"
     DEVICE = "cpu"
             
-    
-    if args.model == 'effB4':
+    modelName = "./modelsCluster/"
+    if args.model == 'ViTB16':
+        print('ViT-B-16')
+        NetModel = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="ViTB16")
+        feat_dim = 768
+    if args.model == 'ConvNeXt':
+        print('ConvNeXt Base')
+        NetModel = convnext_base(weights=ConvNeXt_Base_Weights.IMAGENET1K_V1)
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="ConvNeXt")
+        #modelName += "ConvNeXt_euMoths_episodic_1_0721_221353_AdvLoss.pth"
+        modelName += "ConvNeXt_euMoths_episodic_2_0722_000232_AdvLoss.pth"
+        feat_dim = 1024
+    if args.model == 'EfficientNetB3':
+        print('EfficientNetB3')
+        NetModel = efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1) # 82.00, 12.2M
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="effB3")
+        feat_dim = 1536
+    if args.model == 'EfficientNetB4':
         print('EfficientNetB4')
+        NetModel = efficientnet_b4(weights=EfficientNet_B4_Weights.IMAGENET1K_V1) # 83.38, 19.3M
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="effB4")
         feat_dim = 1792
-        
+           
     if args.model == 'resnet50':
         print('resnet50')
-        ResNetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
+        NetModel = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2) # 80.86, 25.6M
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False)
         #ResNetModel = resnet50(pretrained=True) # 80.86, 25.6M
         
-        modelName = "./modelsCluster/Resnet50_"+args.weights+"_classic_0_0613_172323_AdvLoss.pth" # SC 0.62 RI 0.40
+        #modelName = "./modelsCluster/Resnet50_"+args.weights+"_classic_0_0613_172323_AdvLoss.pth" # SC 0.62 RI 0.40
+        modelName = "./modelsAdv/Resnet50_"+args.weights+"_classic_0_0616_165100_AdvLoss.pth" # SC 0.62 RI 0.40
         
         
         #modelName = "./models/Resnet50_"+args.weights+"_model.pth"
@@ -208,14 +233,16 @@ if __name__=='__main__':
         feat_dim = 2048
     if args.model == 'resnet34':
         print('resnet34')
-        ResNetModel = resnet34(weights=ResNet34_Weights.IMAGENET1K_V2)
+        NetModel = resnet34(weights=ResNet34_Weights.IMAGENET1K_V2)
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False)
         #ResNetModel = resnet34(pretrained=True) # 80.86, 25.6M
         modelName = "./models/Resnet34_"+args.weights+"_model.pth"
         feat_dim = 512
     if args.model == 'resnet18':
         print('resnet18')
-        ResNetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
-        #ResNetModel = resnet18(pretrained=True) # 80.86, 25.6M
+        NetModel = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1) 
+        model = EmbeddingsModel(NetModel, num_classes, use_fc=False)
+        #NetModel = resnet18(pretrained=True) # 80.86, 25.6M
         #modelName = "./models/Resnet18_"+args.weights+"_model.pth"
         
         # Best univariant model
@@ -232,7 +259,6 @@ if __name__=='__main__':
         #modelName = "./models/Resnet18_"+args.weights+"_episodic_10_0506_073056_AdvLoss.pth" # multivariant scatter 30 classes 5-shot 6-query, alpha 1.0, train 0.2, very bad
         feat_dim = 512
 
-    model = EmbeddingsModel(ResNetModel, num_classes, use_fc=False)
     
     if args.weights == 'ImageNet':
         print('Using pretrained weights with ImageNet dataset')
@@ -311,10 +337,13 @@ if __name__=='__main__':
             kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
             predictions_all = kmeans.fit(features_all).predict(features_all)
                    
-        if args.method == 'SpecClust': #NA
+        if args.method == 'SpecClust':
             print("Spectral clustering")
-            sc = SpectralClustering(n_clusters=test_classes, affinity='precomputed', n_init=100,
-                                    assign_labels='discretize')
+            sc = SpectralClustering(n_clusters=test_classes,
+                                    affinity='nearest_neighbors', 
+                                    assign_labels='kmeans',
+                                    eigen_solver='arpack',
+                                    random_state=0)
             predictions_all = sc.fit_predict(features_all)  
             
         if args.method == 'DBSCANClust': #NA
@@ -324,10 +353,12 @@ if __name__=='__main__':
             predictions_all = dbscan.labels_
             
         if args.method == 'HDBSCANClust': 
-            dbscan = HDBSCAN(min_cluster_size=2)
+            dbscan = HDBSCAN(min_cluster_size=3, store_centers='centroid')
             embs = features_all / np.linalg.norm(features_all, axis=1, keepdims=True)
             dbscan.fit(embs)
-            predictions_all = dbscan.labels_       
+            predictions_all = dbscan.labels_ 
+            centroids = dbscan.centroids_ 
+            print("Number of centroids", len(centroids))
             
         accuracy, TP = computeAccuracy(np.array(labels_all), predictions_all)
         print("Similarity", str(test_classes) + " classes", accuracy, TP, len(predictions_all))

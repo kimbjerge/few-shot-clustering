@@ -12,6 +12,9 @@ import torch
 import argparse
 from statistics import mode
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import SpectralClustering
+
 from sklearn.metrics.cluster import adjusted_rand_score, adjusted_mutual_info_score, normalized_mutual_info_score
 
 from torch.utils.data import DataLoader
@@ -49,18 +52,33 @@ def computeSimilarClassScore(labels, predictions):
     SCscore = TruePositives/len(predictions)
     return SCscore
 
-def evaluateClustering(embeddings_model, val_loader, device, test_classes):
+def evaluateClustering(embeddings_df, test_classes, cluster_algo):
        
-    print("Evaluate clustering with K-means on feature embeddings")
+    print("Evaluate clustering with", cluster_algo, "on feature embeddings")
     
-    embeddings_df = predict_embeddings(val_loader, embeddings_model, device=device)
-            
     features_dataset = FeaturesDataset.from_dataframe(embeddings_df)
     features_all = features_dataset[:][0].numpy()
     labels_all = features_dataset[:][1]   
-    
-    kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
-    predictions_all = kmeans.fit(features_all).predict(features_all)
+
+    if cluster_algo == "Kmeans":
+        print("K-means clustering")
+        kmeans = KMeans(n_clusters=test_classes, random_state=0, n_init="auto")
+        predictions_all = kmeans.fit(features_all).predict(features_all)
+        
+    if cluster_algo == "SpecClust":
+        print("Spectral clustering")
+        sc = SpectralClustering(n_clusters=test_classes,
+                                affinity='nearest_neighbors', 
+                                assign_labels='kmeans',
+                                eigen_solver='arpack',
+                                random_state=0)
+        predictions_all = sc.fit_predict(features_all)  
+        
+    if cluster_algo == "GMM":
+        print("Gausian Mixture Models")
+        gmm = GaussianMixture(n_components=test_classes, covariance_type='full', random_state=42)
+        predictions_all = gmm.fit(features_all).predict(features_all)
+     
     RIscore = adjusted_rand_score(np.array(labels_all), predictions_all)
     MIscore = adjusted_mutual_info_score(np.array(labels_all), predictions_all)
     NMIscore = normalized_mutual_info_score(np.array(labels_all), predictions_all)
@@ -187,6 +205,8 @@ if __name__=='__main__':
     parser.add_argument('--batch', default='250', type=int) # training batch size
     parser.add_argument('--device', default='cpu') #cpu or cuda:0-3
     parser.add_argument('--validate', default='', type=bool) #default false when no parameter (Validate or test dataset)
+    parser.add_argument('--clusterAlgo', default='Kmeans,SpecClust') #default Kmeans,SpecClust,GMM
+    parser.add_argument('--seed', default=0, type=int) #Random seed
 
     # Theses arguments must not be changed and will be updated based on the model name
     parser.add_argument('--model', default='') #resnet12 (Omniglot), resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4, ConvNeXt, ViTB16 Must be empty
@@ -196,7 +216,7 @@ if __name__=='__main__':
         
     args = parser.parse_args()
  
-    random_seed = 0
+    random_seed = args.seed
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)
     random.seed(random_seed)
@@ -278,8 +298,8 @@ if __name__=='__main__':
             model, feat_dim = load_model(args.modelDir + '/' +modelName, num_classes, args.model, args.weights)
 
             #resFileName =  args.model + '_' +  args.dataset + '_' + args.modelDir + "_cluster_test.txt"
-            resFileName =  args.model + '_' +  args.dataset + "_cluster_test.txt"
-            line = "ModelDir,Model,TrainMethod,Dataset,ValTest,BatchSize,Classes,RIscore,MIscore,NMIscore,SCscore,Alpha,ModelName\n"
+            resFileName =  args.model + '_' +  args.dataset + "_cluster_test_" + str(random_seed) + ".txt"
+            line = "ModelDir,Model,TrainMethod,Dataset,ValTest,BatchSize,Classes,ClusterAlgo,RIscore,MIscore,NMIscore,SCscore,Alpha,RandomSeed,ModelName\n"
             if os.path.exists(resDir+subDir+resFileName):
                 resFile = open(resDir+subDir+resFileName, "a")
             else:
@@ -301,20 +321,27 @@ if __name__=='__main__':
             test_classes = len(set(test_set.get_labels()))
             print("Test classes", test_classes)
     
-            #%% Test clustering
-            RIscore, MIscore, NMIscore, SCscore = evaluateClustering(
-                model, test_loader, device=DEVICE, test_classes=test_classes
-            ) 
+            #%% Predict feature embeddings
+            embeddings_df = predict_embeddings(test_loader, model, device=DEVICE)
 
-            #%% Save results
             trainMethod = modelName.split('_')[2] # Classic or episodic
             if trainMethod == "imagenet": # Mini and Tiered imagenet 
-                trainMethod = modelName.split('_')[3] # Classic or episodic                
-            line = args.modelDir + ',' + args.model + ',' + trainMethod + ',' + args.dataset + ',' + dataSetName + ',' + str(args.batch) + ',' + str(test_classes) + ',' 
-            line += str(RIscore) + ',' + str(MIscore) + ',' + str(NMIscore) + ',' + str(SCscore)  + ','
-            line += str(args.alpha) + ',' + args.modelDir + '/' + modelName +  '\n'
-            print(line)
-            resFile.write(line)    
-            resFile.flush()
+                trainMethod = modelName.split('_')[3] # Classic or episodic  
+
+            #%% Test clustering algorithms
+            clusterAlgos = args.clusterAlgo.split(",")
+            for clusterAlgo in clusterAlgos:
+                RIscore, MIscore, NMIscore, SCscore = evaluateClustering(
+                    embeddings_df, test_classes=test_classes, cluster_algo=clusterAlgo
+                ) 
+        
+                #%% Save results             
+                line = args.modelDir + ',' + args.model + ',' + trainMethod + ',' + args.dataset + ',' + dataSetName + ',' + str(args.batch) + ',' + str(test_classes) + ',' 
+                line += clusterAlgo + ',' + str(RIscore) + ',' + str(MIscore) + ',' + str(NMIscore) + ',' + str(SCscore)  + ','
+                line += str(args.alpha) + ',' + str(random_seed) + ',' + args.modelDir + '/' + modelName +  '\n'
+                print(line)
+                resFile.write(line)    
+                resFile.flush()
+
             resFile.close()
             
