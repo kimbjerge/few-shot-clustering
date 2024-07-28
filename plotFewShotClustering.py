@@ -52,6 +52,10 @@ def plotClusterScoresSeeds(filePath, seeds, clusterName, clusterAlgo, text):
     plt.scatter(0.0, np.mean(AMIscoresClassic), s=50, edgecolors='black', c="red")
     plt.plot(alpha, np.mean(ARIscores, 0), color="orange")
     plt.scatter(0.0, np.mean(ARIscoresClassic), s=50, edgecolors='black', c="orange")
+
+    print(clusterName, clusterAlgo, "max AMIscore", np.max(np.mean(AMIscores, 0)), "Classic", np.mean(AMIscoresClassic))
+    print(clusterName, clusterAlgo, "max ARIscore", np.max(np.mean(ARIscores, 0)), "Classic", np.mean(ARIscoresClassic))
+
     #plt.title("Clustering score vs. alpha values (Validate dataset)")
     plt.title("Clustering vs. alpha " + text)
     plt.ylabel('Score')
