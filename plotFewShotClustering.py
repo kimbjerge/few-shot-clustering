@@ -4,10 +4,74 @@ Created on Wed Jul 17 13:26:30 2024
 
 @author: Kim Bjerge
 """
+import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+alpha = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+seeds = [0, 37, 74, 158, 261]
+
+def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelNames, clusterAlgos):
+    
+    figure = plt.figure(figsize=(10,10))
+    figure.tight_layout(pad=1.0)
+
+    subplots=[221, 222, 223, 224]    
+
+    print("===============================================================")
+    print(datasetName, "ClusterAlgo Pretrained Classic Episodic Alpha")
+    for modelName in modelNames:
+        for clusterAlgo in clusterAlgos:
+            ARI_pretrained = []
+            ARI_classic = []
+            ARI_episodic = []
+            filesExist = False
+            for seed in seeds:
+                fileName = modelName + '_' + datasetName  
+                pretrainedFile = pretrainedPath + fileName + f'_cluster_test.txt' 
+                trainedFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
+                #print(pretrainedFile, trainedFile)
+                
+                if os.path.exists(pretrainedFile):
+                    data_df_pretrained = pd.read_csv(pretrainedFile)
+                    data_df_pretrained = data_df_pretrained.loc[data_df_pretrained['ValTest'] == "Test"]
+                else:
+                    print("File doesn't exist", pretrainedFile)
+
+                #data_df_pretrained = data_df_pretrained.loc[data_df_pretrained['clusterAlgo'] == clusterAlgo]
+                if os.path.exists(trainedFile):
+                    data_df = pd.read_csv(trainedFile)
+                    data_df = data_df.loc[data_df['ClusterAlgo'] == clusterAlgo]
+                    data_df_classic = data_df.loc[data_df['TrainMethod'] == "classic"]
+                    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]  
+                    data_df = data_df.sort_values(["Alpha"])
+                    
+                    ARI_pretrained.append(data_df_pretrained[metricScore].to_list())
+                    ARI_classic.append(data_df_classic[metricScore].to_list())
+                    ARI_episodic.append(data_df[metricScore].to_list())
+                    filesExist = True
+                else:
+                    print("File doesn't exist", trainedFile)
+            
+            if filesExist:
+                ARI_pretrained_mean = np.mean(ARI_pretrained)
+                ARI_classic_mean = np.mean(ARI_classic)
+                ARI_episodic_mean = np.mean(ARI_episodic, 0)
+                ARI_episodic_max = np.max(ARI_episodic_mean)
+                ARI_episodic_alpha = alpha[np.argmax(ARI_episodic_mean)]
+                print(modelName, clusterAlgo, ARI_pretrained_mean, ARI_classic_mean, ARI_episodic_max, ARI_episodic_alpha)
+            
+            methods = ['Pretrained', 'Classic', r'Episodic ($\alpha$=' + f'{ARI_episodic_alpha})']
+            plt.subplot(subplots[modelNames.index(modelName)])
+            plt.bar(methods, [ARI_pretrained_mean, ARI_classic_mean, ARI_episodic_max], width=0.3, color=["blue", "green", "red"])
+            plt.title(modelName)
+            plt.ylabel("ARI score")
+            plt.ylim(0.1, 1)
+        
+        plt.suptitle(datasetName+" Dataset with Spectral Clustering")
+                
+    plt.show()  
 
 def plotClusterScoresSeeds(filePath, seeds, clusterName, clusterAlgo, text):
 
@@ -47,7 +111,6 @@ def plotClusterScoresSeeds(filePath, seeds, clusterName, clusterAlgo, text):
                     style='.',
                     color='blue', ax=ax)
         
-    alpha = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     plt.plot(alpha, np.mean(AMIscores, 0), color="red")
     plt.scatter(0.0, np.mean(AMIscoresClassic), s=50, edgecolors='black', c="red")
     plt.plot(alpha, np.mean(ARIscores, 0), color="orange")
@@ -201,7 +264,7 @@ def plotFirstResults():
     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]
     plotClusterScore(data_df, "(ViT-B-16, EU Moths)")
 
-def plotRandResults():
+def plotRandResults1():
 
     #path = "./result/clustering/rand0/"
     #path = "./result/clustering/rand37/"
@@ -278,47 +341,59 @@ def plotRanResult2():
     plotClusterRIMIScoreMulti(paths, "resnet50_tieredImagenet_cluster_test.txt", 
                               "(ResNet50, Tiered Imagenet)")
 
-    
-       
+def plotRanResult3():   
+ 
+     path = "./result/clustering/"
+     
+     plotClusterScoresSeeds(path, seeds, "resnet50_euMoths_cluster_test_", "Kmeans",
+                            "(ResNet50, EU Moths, K-means)")
+     plotClusterScoresSeeds(path, seeds, "efficientnetB3_euMoths_cluster_test_", "Kmeans",
+                            "(EfficientNetB3, EU Moths, K-means)")
+     plotClusterScoresSeeds(path, seeds, "ConvNeXt_euMoths_cluster_test_", "Kmeans",
+                            "(ConvNeXt, EU Moths, K-means)")
+     plotClusterScoresSeeds(path, seeds, "ViTB16_CUB_cluster_test_", "Kmeans",
+                            "(ViT-B-16, EU Moths, K-means)")
+
+     plotClusterScoresSeeds(path, seeds, "resnet50_euMoths_cluster_test_", "SpecClust",
+                            "(ResNet50, EU Moths, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "efficientnetB3_euMoths_cluster_test_", "SpecClust",
+                            "(EfficientNetB3, EU Moths, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "ConvNeXt_euMoths_cluster_test_", "SpecClust",
+                            "(ConvNeXt, EU Moths, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "ViTB16_euMoths_cluster_test_", "SpecClust",
+                            "(ViT-B-16, EU Moths, Spectral)")
+     
+     plotClusterScoresSeeds(path, seeds, "resnet50_CUB_cluster_test_", "SpecClust",
+                            "(ResNet50, CUB, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "efficientnetB3_CUB_cluster_test_", "SpecClust",
+                            "(EfficientNetB3, CUB, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "ConvNeXt_CUB_cluster_test_", "SpecClust",
+                            "(ConvNeXt, CUB, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "ViTB16_CUB_cluster_test_", "SpecClust",
+                            "(ViT-B-16, CUB, Spectral)")
+     
+     plotClusterScoresSeeds(path, seeds, "resnet50_miniImagenet_cluster_test_", "SpecClust",
+                            "(ResNet50, Mini, Spectral)")
+     #plotClusterScoresSeeds(path, seeds, "efficientnetB3_miniImagenet_cluster_test_", "SpecClust",
+     #                       "(EfficientNetB3, Mini, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "ConvNeXt_miniImagenet_cluster_test_", "SpecClust",
+                            "(ConvNeXt, Mini, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "ViTB16_miniImagenet_cluster_test_", "SpecClust",
+                            "(ViT-B-16, Mini, Spectral)")      
+
 #%% MAIN
 if __name__=='__main__':
     
-    path = "./result/clustering/"
+    plotRanResult3()
+        
+        
+    pretrainedPath = "./result/clusteringImgNet/"
+    clusteringPath = "./result/clustering/"
+    models = ["resnet50", "efficientnetb3", "convnext", "vitb16"]
+    clusterAlgos = ["SpecClust"] # Kmeans, SpecClust
+    metricScore = "RIscore" # RIscore, MIscore, NMIscore
     
-    seeds = [0, 37, 74, 158, 261]
-    
-    plotClusterScoresSeeds(path, seeds, "resnet50_euMoths_cluster_test_", "Kmeans",
-                           "(ResNet50, EU Moths, K-means)")
-    plotClusterScoresSeeds(path, seeds, "efficientnetB3_euMoths_cluster_test_", "Kmeans",
-                           "(EfficientNetB3, EU Moths, K-means)")
-    plotClusterScoresSeeds(path, seeds, "ConvNeXt_euMoths_cluster_test_", "Kmeans",
-                           "(ConvNeXt, EU Moths, K-means)")
-    plotClusterScoresSeeds(path, seeds, "ViTB16_CUB_cluster_test_", "Kmeans",
-                           "(ViT-B-16, EU Moths, K-means)")
-
-    plotClusterScoresSeeds(path, seeds, "resnet50_euMoths_cluster_test_", "SpecClust",
-                           "(ResNet50, EU Moths, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "efficientnetB3_euMoths_cluster_test_", "SpecClust",
-                           "(EfficientNetB3, EU Moths, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "ConvNeXt_euMoths_cluster_test_", "SpecClust",
-                           "(ConvNeXt, EU Moths, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "ViTB16_euMoths_cluster_test_", "SpecClust",
-                           "(ViT-B-16, EU Moths, Spectral)")
-    
-    plotClusterScoresSeeds(path, seeds, "resnet50_CUB_cluster_test_", "SpecClust",
-                           "(ResNet50, CUB, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "efficientnetB3_CUB_cluster_test_", "SpecClust",
-                           "(EfficientNetB3, CUB, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "ConvNeXt_CUB_cluster_test_", "SpecClust",
-                           "(ConvNeXt, CUB, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "ViTB16_CUB_cluster_test_", "SpecClust",
-                           "(ViT-B-16, CUB, Spectral)")
-    
-    plotClusterScoresSeeds(path, seeds, "resnet50_miniImagenet_cluster_test_", "SpecClust",
-                           "(ResNet50, Mini, Spectral)")
-    #plotClusterScoresSeeds(path, seeds, "efficientnetB3_miniImagenet_cluster_test_", "SpecClust",
-    #                       "(EfficientNetB3, Mini, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "ConvNeXt_miniImagenet_cluster_test_", "SpecClust",
-                           "(ConvNeXt, Mini, Spectral)")
-    plotClusterScoresSeeds(path, seeds, "ViTB16_miniImagenet_cluster_test_", "SpecClust",
-                           "(ViT-B-16, Mini, Spectral)")
+    plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
+    plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
+    plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
+    plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["Kmeans"])
