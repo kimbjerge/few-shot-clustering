@@ -139,7 +139,7 @@ def classicTrain(model, modelName, train_loader, val_loader, few_shot_classifier
     
     best_state = model.state_dict()
     best_validation_accuracy = 0.0
-    validation_frequency = 5
+    validation_frequency = 2
     best_epoch = 0
     best_loss = 1000.0
     for epoch in range(n_epochs):
