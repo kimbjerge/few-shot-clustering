@@ -14,7 +14,7 @@ seeds = [0, 37, 74, 158, 261]
 
 def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelNames, clusterAlgos):
     
-    figure = plt.figure(figsize=(10,10))
+    figure = plt.figure(figsize=(11,11))
     figure.tight_layout(pad=1.0)
 
     subplots=[221, 222, 223, 224]    
@@ -29,7 +29,7 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
             filesExist = False
             for seed in seeds:
                 fileName = modelName + '_' + datasetName  
-                pretrainedFile = pretrainedPath + fileName + f'_cluster_test.txt' 
+                pretrainedFile = pretrainedPath + fileName + f'_cluster_test_0.txt' 
                 trainedFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
                 #print(pretrainedFile, trainedFile)
                 
@@ -67,9 +67,16 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
             plt.bar(methods, [ARI_pretrained_mean, ARI_classic_mean, ARI_episodic_max], width=0.3, color=["blue", "green", "red"])
             plt.title(modelName)
             plt.ylabel("ARI score")
-            plt.ylim(0.1, 1)
-        
-        plt.suptitle(datasetName+" Dataset with Spectral Clustering")
+            if datasetName == "miniImagenet":
+                plt.ylim(0.8, 1)
+            else:
+                plt.ylim(0.1, 1)
+            
+        if clusterAlgo == "SpecClust":
+            plt.suptitle(datasetName+" Dataset with Spectral Clustering")
+        else:
+            plt.suptitle(datasetName+" Dataset with K-means Clustering")
+            
                 
     plt.show()  
 
@@ -123,7 +130,10 @@ def plotClusterScoresSeeds(filePath, seeds, clusterName, clusterAlgo, text):
     plt.title("Clustering vs. alpha " + text)
     plt.ylabel('Score')
     plt.xlabel('Alpha')
-    plt.ylim(0.25, 1.00) 
+    if "mini" in clusterName:
+        plt.ylim(0.8, 1.00) 
+    else:
+        plt.ylim(0.25, 1.00) 
     #plt.xlim(0, 20)
     plt.legend(["AMI score", "ARI score"])
     plt.show()
@@ -374,8 +384,8 @@ def plotRanResult3():
      
      plotClusterScoresSeeds(path, seeds, "resnet50_miniImagenet_cluster_test_", "SpecClust",
                             "(ResNet50, Mini, Spectral)")
-     #plotClusterScoresSeeds(path, seeds, "efficientnetB3_miniImagenet_cluster_test_", "SpecClust",
-     #                       "(EfficientNetB3, Mini, Spectral)")
+     plotClusterScoresSeeds(path, seeds, "efficientnetB3_miniImagenet_cluster_test_", "SpecClust",
+                            "(EfficientNetB3, Mini, Spectral)")
      plotClusterScoresSeeds(path, seeds, "ConvNeXt_miniImagenet_cluster_test_", "SpecClust",
                             "(ConvNeXt, Mini, Spectral)")
      plotClusterScoresSeeds(path, seeds, "ViTB16_miniImagenet_cluster_test_", "SpecClust",
