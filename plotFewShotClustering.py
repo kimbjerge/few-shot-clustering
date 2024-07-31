@@ -48,7 +48,9 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
                     data_df = data_df.sort_values(["Alpha"])
                     
                     ARI_pretrained.append(data_df_pretrained[metricScore].to_list())
-                    ARI_classic.append(data_df_classic[metricScore].to_list())
+                    classicScore = data_df_classic[metricScore].to_list()
+                    if len(classicScore) > 0:
+                        ARI_classic.append(classicScore)
                     ARI_episodic.append(data_df[metricScore].to_list())
                     filesExist = True
                 else:
@@ -67,10 +69,13 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
             plt.bar(methods, [ARI_pretrained_mean, ARI_classic_mean, ARI_episodic_max], width=0.3, color=["blue", "green", "red"])
             plt.title(modelName)
             plt.ylabel("ARI score")
-            if datasetName == "miniImagenet":
-                plt.ylim(0.8, 1)
+            if datasetName == "miniImagenet": 
+                plt.ylim(0.8, 1)            
             else:
-                plt.ylim(0.1, 1)
+                if datasetName == 'tieredImagenet':
+                    plt.ylim(0.4, 1)            
+                else:
+                    plt.ylim(0.1, 1)
             
         if clusterAlgo == "SpecClust":
             plt.suptitle(datasetName+" Dataset with Spectral Clustering")
@@ -394,7 +399,7 @@ def plotRanResult3():
 #%% MAIN
 if __name__=='__main__':
     
-    plotRanResult3()
+    #plotRanResult3()
         
         
     pretrainedPath = "./result/clusteringImgNet/"
@@ -403,7 +408,7 @@ if __name__=='__main__':
     clusterAlgos = ["SpecClust"] # Kmeans, SpecClust
     metricScore = "RIscore" # RIscore, MIscore, NMIscore
     
-    plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
-    plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
+    #plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
+    #plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
     plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
     plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["Kmeans"])
