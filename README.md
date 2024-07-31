@@ -21,15 +21,20 @@ The code selectes one of the below datasets and computes the embedding features 
 The resulting embeddings are clustered by selecting different clustering models such as GMM and K-means.
 
 # Datasets used for training, validation, and testing
-A copy of the prepared Omniglot, CU-Birds and EU-moths datasets can be downloaded from here:
+A copy of the prepared CU-Birds and EU-moths datasets can be downloaded from here:
 
 https://drive.google.com/drive/folders/1xaAJG_-wGpqR0JRUAEjzbcZyS5GxrhNk
 
+The miniImagenet and tieredImagenet dataset can be found here:
+
+https://lyy.mpi-inf.mpg.de/mtl/download/Lmzjm9tX.html
+
 The zipped files must be copied and unzipped to the folders:
 
- - data/Omniglot
  - data/CUB
  - data/euMoths
+ - data/mini_imagenet
+ - data/tiered_imagenet
 
 ## miniImageNet
 This dataset presents a preprocessed version of the miniImageNet benchmark dataset used in few-shot learning. This version of miniImageNet is not resized to any particular size and is left to be the same size as they are in the ImageNet dataset.
