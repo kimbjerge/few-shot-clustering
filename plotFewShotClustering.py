@@ -31,6 +31,11 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
                 fileName = modelName + '_' + datasetName  
                 pretrainedFile = pretrainedPath + fileName + f'_cluster_test_0.txt' 
                 trainedFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
+                if datasetName == 'tieredImagenet':
+                    #trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}C.txt' 
+                    trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
+                else:
+                    trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
                 #print(pretrainedFile, trainedFile)
                 
                 if os.path.exists(pretrainedFile):
@@ -41,9 +46,13 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
 
                 #data_df_pretrained = data_df_pretrained.loc[data_df_pretrained['clusterAlgo'] == clusterAlgo]
                 if os.path.exists(trainedFile):
+
+                    data_df_classic = pd.read_csv(trainedClassicFile)
+                    data_df_classic = data_df_classic.loc[data_df_classic['ClusterAlgo'] == clusterAlgo]
+                    data_df_classic = data_df_classic.loc[data_df_classic['TrainMethod'] == "classic"]
+
                     data_df = pd.read_csv(trainedFile)
                     data_df = data_df.loc[data_df['ClusterAlgo'] == clusterAlgo]
-                    data_df_classic = data_df.loc[data_df['TrainMethod'] == "classic"]
                     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]  
                     data_df = data_df.sort_values(["Alpha"])
                     
@@ -410,5 +419,5 @@ if __name__=='__main__':
     
     #plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
     #plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
-    plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
+    #plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
     plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["Kmeans"])
