@@ -12,8 +12,165 @@ import numpy as np
 alpha = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 seeds = [0, 37, 74, 158, 261]
 
+def createTableDataPaper(pretrainedPath, filePath, datasetName, modelNames, clusterAlgos):
+
+    print("===============================================================")
+    print(datasetName, "ClusterAlgo Fine-tuned Method Alpha CA MI NMI ARI")
+    tableText = ""
+    for modelName in modelNames:
+        for clusterAlgo in clusterAlgos:
+            CA_pretrained = []
+            CA_classic = []
+            CA_episodic = []
+            AMI_pretrained = []
+            AMI_classic = []
+            AMI_episodic = []
+            NMI_pretrained = []
+            NMI_classic = []
+            NMI_episodic = []
+            ARI_pretrained = []
+            ARI_classic = []
+            ARI_episodic = []
+            filesExist = False
+            for seed in seeds:
+                fileName = modelName + '_' + datasetName  
+                pretrainedFile = pretrainedPath + fileName + f'_cluster_test_0.txt' 
+                trainedFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
+                if datasetName == 'tieredImagenet':
+                    #trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}C.txt' 
+                    trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
+                else:
+                    trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}.txt' # Pre-trained on ImageNet
+                #print(pretrainedFile, trainedFile)
+                
+                if os.path.exists(pretrainedFile):
+                    data_df_pretrained = pd.read_csv(pretrainedFile)
+                    data_df_pretrained = data_df_pretrained.loc[data_df_pretrained['ValTest'] == "Test"]
+                else:
+                    print("File doesn't exist", pretrainedFile)
+
+                #data_df_pretrained = data_df_pretrained.loc[data_df_pretrained['clusterAlgo'] == clusterAlgo]
+                if os.path.exists(trainedFile):
+
+                    data_df_classic = pd.read_csv(trainedClassicFile)
+                    data_df_classic = data_df_classic.loc[data_df_classic['ClusterAlgo'] == clusterAlgo]
+                    data_df_classic = data_df_classic.loc[data_df_classic['TrainMethod'] == "classic"]
+
+                    data_df = pd.read_csv(trainedFile)
+                    data_df = data_df.loc[data_df['ClusterAlgo'] == clusterAlgo]
+                    data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]  
+                    data_df = data_df.sort_values(["Alpha"])
+                    
+                    metricScore = "SCscore"
+                    CA_pretrained.append(data_df_pretrained[metricScore].to_list())
+                    classicScore = data_df_classic[metricScore].to_list()
+                    if len(classicScore) > 0:
+                        CA_classic.append(classicScore)
+                    CA_episodic.append(data_df[metricScore].to_list())
+
+                    metricScore = "MIscore"
+                    AMI_pretrained.append(data_df_pretrained[metricScore].to_list())
+                    classicScore = data_df_classic[metricScore].to_list()
+                    if len(classicScore) > 0:
+                        AMI_classic.append(classicScore)
+                    AMI_episodic.append(data_df[metricScore].to_list())
+
+                    metricScore = "NMIscore"
+                    NMI_pretrained.append(data_df_pretrained[metricScore].to_list())
+                    classicScore = data_df_classic[metricScore].to_list()
+                    if len(classicScore) > 0:
+                        NMI_classic.append(classicScore)
+                    NMI_episodic.append(data_df[metricScore].to_list())
+                        
+                    metricScore = "RIscore"
+                    ARI_episodic.append(data_df[metricScore].to_list())                    
+                    ARI_pretrained.append(data_df_pretrained[metricScore].to_list())
+                    classicScore = data_df_classic[metricScore].to_list()
+                    if len(classicScore) > 0:
+                        ARI_classic.append(classicScore)
+                    ARI_episodic.append(data_df[metricScore].to_list())
+                    filesExist = True
+                else:
+                    print("File doesn't exist", trainedFile)
+            
+            if filesExist:
+                #ARI_pretrained_mean = np.mean(ARI_pretrained)
+
+                CA_classic_mean = np.mean(CA_classic)
+                CA_classic_std = np.std(CA_classic)       
+                CA_episodic_mean = np.mean(CA_episodic, 0)
+                CA_episodic_stda = np.std(CA_episodic, 0)
+                CA_episodic_max = np.max(CA_episodic_mean)
+                CA_episodic_alpha = alpha[np.argmax(CA_episodic_mean)]
+                CA_episodic_std = CA_episodic_stda[np.argmax(CA_episodic_mean)]
+
+                NMI_classic_mean = np.mean(NMI_classic)
+                NMI_classic_std = np.std(NMI_classic)
+                NMI_episodic_mean = np.mean(NMI_episodic, 0)
+                NMI_episodic_stda = np.std(NMI_episodic, 0)
+                NMI_episodic_max = np.max(NMI_episodic_mean)
+                NMI_episodic_alpha = alpha[np.argmax(NMI_episodic_mean)]
+                NMI_episodic_std = NMI_episodic_stda[np.argmax(NMI_episodic_mean)]
+
+                AMI_classic_mean = np.mean(AMI_classic)
+                AMI_classic_std = np.std(AMI_classic)
+                AMI_episodic_mean = np.mean(AMI_episodic, 0)
+                AMI_episodic_stda = np.std(AMI_episodic, 0)
+                AMI_episodic_max = np.max(AMI_episodic_mean)
+                AMI_episodic_alpha = alpha[np.argmax(AMI_episodic_mean)]
+                AMI_episodic_std = AMI_episodic_stda[np.argmax(AMI_episodic_mean)]
+
+                ARI_classic_mean = np.mean(ARI_classic)
+                ARI_classic_std = np.std(ARI_classic)
+                ARI_episodic_mean = np.mean(ARI_episodic, 0)
+                ARI_episodic_stda = np.std(ARI_episodic, 0)
+                ARI_episodic_max = np.max(ARI_episodic_mean)
+                ARI_episodic_alpha = alpha[np.argmax(ARI_episodic_mean)]
+                ARI_episodic_std = ARI_episodic_stda[np.argmax(ARI_episodic_mean)]
+
+                if modelName == "resnet50":
+                    modelName = "ResNet50v2"
+                if modelName == "efficientnetb3":
+                    modelName = "EfficientNetB3"
+                if modelName == "convnext":
+                    modelName = "ConvNeXt-B"
+                if modelName == "vitb16":
+                    modelName = "ViT-B/16"
+                    
+                if clusterAlgo == "Kmeans":
+                    clusterName = "K-means"
+                if clusterAlgo == "SpecClust":
+                    clusterName = "Spectral"
+                
+                text = modelName + " & "
+                text += clusterName + " & "
+                text += "Classic & "
+                text += "- & "
+                text += "%0.3f(%0.3f) & " % (CA_classic_mean, CA_classic_std)
+                text += "%0.3f(%0.3f) & " % (NMI_classic_mean, NMI_classic_std)
+                text += "%0.3f(%0.3f) & " % (AMI_classic_mean, AMI_classic_std)
+                text += "%0.3f(%0.3f) " % (ARI_classic_mean, ARI_classic_std)
+                text += "\\\\\n"
+                
+                text += modelName + " & "
+                text += clusterName + " & "
+                text += "Episodic & "
+                text += "%0.1f & " % (ARI_episodic_alpha)
+                text += "%0.3f(%0.3f) & " % (CA_episodic_max, CA_episodic_std)
+                text += "%0.3f(%0.3f) & " % (NMI_episodic_max, NMI_episodic_std)
+                text += "%0.3f(%0.3f) & " % (AMI_episodic_max, AMI_episodic_std)
+                text += "%0.3f(%0.3f) " % (ARI_episodic_max, ARI_episodic_std)
+                text += "\\\\\n"
+                
+                print(text)
+                print(CA_episodic_alpha, NMI_episodic_alpha, AMI_episodic_alpha, ARI_episodic_alpha)
+                tableText += text
+                
+    return tableText
+
 def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelNames, clusterAlgos):
     
+    plt.rcParams.update({'font.size': 14})
     figure = plt.figure(figsize=(11,11))
     figure.tight_layout(pad=1.0)
 
@@ -55,12 +212,13 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
                     data_df = data_df.loc[data_df['ClusterAlgo'] == clusterAlgo]
                     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]  
                     data_df = data_df.sort_values(["Alpha"])
-                    
+
                     ARI_pretrained.append(data_df_pretrained[metricScore].to_list())
                     classicScore = data_df_classic[metricScore].to_list()
                     if len(classicScore) > 0:
                         ARI_classic.append(classicScore)
                     ARI_episodic.append(data_df[metricScore].to_list())
+                                        
                     filesExist = True
                 else:
                     print("File doesn't exist", trainedFile)
@@ -76,6 +234,14 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
             methods = ['Pretrained', 'Classic', r'Episodic ($\alpha$=' + f'{ARI_episodic_alpha})']
             plt.subplot(subplots[modelNames.index(modelName)])
             plt.bar(methods, [ARI_pretrained_mean, ARI_classic_mean, ARI_episodic_max], width=0.3, color=["blue", "green", "red"])
+            if modelName == "resnet50":
+                modelName = "ResNet50v2"
+            if modelName == "efficientnetb3":
+                modelName = "EfficientNetB3"
+            if modelName == "convnext":
+                modelName = "ConvNeXt-B"
+            if modelName == "vitb16":
+                modelName = "ViT-B/16"
             plt.title(modelName)
             plt.ylabel("ARI score")
             if datasetName == "miniImagenet": 
@@ -85,11 +251,19 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
                     plt.ylim(0.4, 1)            
                 else:
                     plt.ylim(0.1, 1)
+    
+        plotName = datasetName
+        if datasetName == "euMoths":
+            plotName = "EU moths"
+        if datasetName == "miniImagenet":
+            plotName = "miniImageNet"
+        if datasetName == "tieredImagenet":
+            plotName = "tieredImageNet"
             
-        if clusterAlgo == "SpecClust":
-            plt.suptitle(datasetName+" Dataset with Spectral Clustering")
-        else:
-            plt.suptitle(datasetName+" Dataset with K-means Clustering")
+        #if clusterAlgo == "SpecClust":
+        #    plt.suptitle(plotName+" dataset with Spectral clustering")
+        #else:
+        #    plt.suptitle(plotName+" dataset with K-means clustering")
             
                 
     plt.show()  
@@ -376,7 +550,7 @@ def plotRanResult3():
      plotClusterScoresSeeds(path, seeds, "ConvNeXt_euMoths_cluster_test_", "Kmeans",
                             "(ConvNeXt, EU Moths, K-means)")
      plotClusterScoresSeeds(path, seeds, "ViTB16_CUB_cluster_test_", "Kmeans",
-                            "(ViT-B-16, EU Moths, K-means)")
+                            "(ViT-B/16, EU Moths, K-means)")
 
      plotClusterScoresSeeds(path, seeds, "resnet50_euMoths_cluster_test_", "SpecClust",
                             "(ResNet50, EU Moths, Spectral)")
@@ -385,7 +559,7 @@ def plotRanResult3():
      plotClusterScoresSeeds(path, seeds, "ConvNeXt_euMoths_cluster_test_", "SpecClust",
                             "(ConvNeXt, EU Moths, Spectral)")
      plotClusterScoresSeeds(path, seeds, "ViTB16_euMoths_cluster_test_", "SpecClust",
-                            "(ViT-B-16, EU Moths, Spectral)")
+                            "(ViT-B/16, EU Moths, Spectral)")
      
      plotClusterScoresSeeds(path, seeds, "resnet50_CUB_cluster_test_", "SpecClust",
                             "(ResNet50, CUB, Spectral)")
@@ -394,7 +568,7 @@ def plotRanResult3():
      plotClusterScoresSeeds(path, seeds, "ConvNeXt_CUB_cluster_test_", "SpecClust",
                             "(ConvNeXt, CUB, Spectral)")
      plotClusterScoresSeeds(path, seeds, "ViTB16_CUB_cluster_test_", "SpecClust",
-                            "(ViT-B-16, CUB, Spectral)")
+                            "(ViT-B/16, CUB, Spectral)")
      
      plotClusterScoresSeeds(path, seeds, "resnet50_miniImagenet_cluster_test_", "SpecClust",
                             "(ResNet50, Mini, Spectral)")
@@ -403,7 +577,7 @@ def plotRanResult3():
      plotClusterScoresSeeds(path, seeds, "ConvNeXt_miniImagenet_cluster_test_", "SpecClust",
                             "(ConvNeXt, Mini, Spectral)")
      plotClusterScoresSeeds(path, seeds, "ViTB16_miniImagenet_cluster_test_", "SpecClust",
-                            "(ViT-B-16, Mini, Spectral)")      
+                            "(ViT-B/16, Mini, Spectral)")      
 
 #%% MAIN
 if __name__=='__main__':
@@ -417,7 +591,13 @@ if __name__=='__main__':
     clusterAlgos = ["SpecClust"] # Kmeans, SpecClust
     metricScore = "RIscore" # RIscore, MIscore, NMIscore
     
-    #plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
-    #plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
-    #plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
+    #dataSet = "tieredImagenet" # euMoths, CUB, miniImagenet, tieredImagenet
+    #tableText = createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["Kmeans"])
+    #tableText += createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["SpecClust"])
+    #print(dataSet)
+    #print(tableText)
+    
+    plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
+    plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
+    plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
     plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["Kmeans"])
