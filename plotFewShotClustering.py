@@ -146,20 +146,20 @@ def createTableDataPaper(pretrainedPath, filePath, datasetName, modelNames, clus
                 text += clusterName + " & "
                 text += "Classic & "
                 text += "- & "
-                text += "%0.3f(%0.3f) & " % (CA_classic_mean, CA_classic_std)
-                text += "%0.3f(%0.3f) & " % (NMI_classic_mean, NMI_classic_std)
-                text += "%0.3f(%0.3f) & " % (AMI_classic_mean, AMI_classic_std)
-                text += "%0.3f(%0.3f) " % (ARI_classic_mean, ARI_classic_std)
+                text += "%0.3f (%0.3f) & " % (CA_classic_mean, CA_classic_std)
+                text += "%0.3f (%0.3f) & " % (NMI_classic_mean, NMI_classic_std)
+                text += "%0.3f (%0.3f) & " % (AMI_classic_mean, AMI_classic_std)
+                text += "%0.3f (%0.3f) " % (ARI_classic_mean, ARI_classic_std)
                 text += "\\\\\n"
                 
                 text += modelName + " & "
                 text += clusterName + " & "
                 text += "Episodic & "
                 text += "%0.1f & " % (ARI_episodic_alpha)
-                text += "%0.3f(%0.3f) & " % (CA_episodic_max, CA_episodic_std)
-                text += "%0.3f(%0.3f) & " % (NMI_episodic_max, NMI_episodic_std)
-                text += "%0.3f(%0.3f) & " % (AMI_episodic_max, AMI_episodic_std)
-                text += "%0.3f(%0.3f) " % (ARI_episodic_max, ARI_episodic_std)
+                text += "%0.3f (%0.3f) & " % (CA_episodic_max, CA_episodic_std)
+                text += "%0.3f (%0.3f) & " % (NMI_episodic_max, NMI_episodic_std)
+                text += "%0.3f (%0.3f) & " % (AMI_episodic_max, AMI_episodic_std)
+                text += "%0.3f (%0.3f) " % (ARI_episodic_max, ARI_episodic_std)
                 text += "\\\\\n"
                 
                 print(text)
@@ -581,9 +581,10 @@ def plotRanResult3():
 
 #%% MAIN
 if __name__=='__main__':
-    
+ 
+    plt.rcParams.update({'font.size': 12})
+
     #plotRanResult3()
-        
         
     pretrainedPath = "./result/clusteringImgNet/"
     clusteringPath = "./result/clustering/"
@@ -591,13 +592,13 @@ if __name__=='__main__':
     clusterAlgos = ["SpecClust"] # Kmeans, SpecClust
     metricScore = "RIscore" # RIscore, MIscore, NMIscore
     
-    #dataSet = "tieredImagenet" # euMoths, CUB, miniImagenet, tieredImagenet
-    #tableText = createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["Kmeans"])
-    #tableText += createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["SpecClust"])
-    #print(dataSet)
-    #print(tableText)
+    dataSet = "euMoths" # euMoths, CUB, miniImagenet, tieredImagenet
+    tableText = createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["Kmeans"])
+    tableText += createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["SpecClust"])
+    print(dataSet)
+    print(tableText)
     
-    plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
-    plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
-    plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
-    plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["Kmeans"])
+    #plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
+    #plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
+    #plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
+    #plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["Kmeans"])
