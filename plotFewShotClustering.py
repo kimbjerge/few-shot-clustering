@@ -66,29 +66,37 @@ def createTableDataPaper(pretrainedPath, filePath, datasetName, modelNames, clus
                     classicScore = data_df_classic[metricScore].to_list()
                     if len(classicScore) > 0:
                         CA_classic.append(classicScore)
-                    CA_episodic.append(data_df[metricScore].to_list())
+                    episodicScore = data_df[metricScore].to_list()    
+                    if len(episodicScore) > 0:
+                        CA_episodic.append(episodicScore)
 
                     metricScore = "MIscore"
                     AMI_pretrained.append(data_df_pretrained[metricScore].to_list())
                     classicScore = data_df_classic[metricScore].to_list()
                     if len(classicScore) > 0:
                         AMI_classic.append(classicScore)
-                    AMI_episodic.append(data_df[metricScore].to_list())
+                    episodicScore = data_df[metricScore].to_list()    
+                    if len(episodicScore) > 0:
+                        AMI_episodic.append(episodicScore)
 
                     metricScore = "NMIscore"
                     NMI_pretrained.append(data_df_pretrained[metricScore].to_list())
                     classicScore = data_df_classic[metricScore].to_list()
                     if len(classicScore) > 0:
                         NMI_classic.append(classicScore)
-                    NMI_episodic.append(data_df[metricScore].to_list())
+                    episodicScore = data_df[metricScore].to_list()    
+                    if len(episodicScore) > 0:
+                        NMI_episodic.append(episodicScore)
                         
                     metricScore = "RIscore"
-                    ARI_episodic.append(data_df[metricScore].to_list())                    
                     ARI_pretrained.append(data_df_pretrained[metricScore].to_list())
                     classicScore = data_df_classic[metricScore].to_list()
                     if len(classicScore) > 0:
                         ARI_classic.append(classicScore)
-                    ARI_episodic.append(data_df[metricScore].to_list())
+                    episodicScore = data_df[metricScore].to_list()    
+                    if len(episodicScore) > 0:
+                        ARI_episodic.append(episodicScore)
+
                     filesExist = True
                 else:
                     print("File doesn't exist", trainedFile)
@@ -98,35 +106,60 @@ def createTableDataPaper(pretrainedPath, filePath, datasetName, modelNames, clus
 
                 CA_classic_mean = np.mean(CA_classic)
                 CA_classic_std = np.std(CA_classic)       
-                CA_episodic_mean = np.mean(CA_episodic, 0)
-                CA_episodic_stda = np.std(CA_episodic, 0)
-                CA_episodic_max = np.max(CA_episodic_mean)
-                CA_episodic_alpha = alpha[np.argmax(CA_episodic_mean)]
-                CA_episodic_std = CA_episodic_stda[np.argmax(CA_episodic_mean)]
-
+                if len(CA_episodic) > 0:
+                    CA_episodic_mean = np.mean(CA_episodic, 0)
+                    CA_episodic_stda = np.std(CA_episodic, 0)
+                    CA_episodic_max = np.max(CA_episodic_mean)
+                    CA_episodic_alpha = alpha[np.argmax(CA_episodic_mean)]
+                    CA_episodic_std = CA_episodic_stda[np.argmax(CA_episodic_mean)]
+                else:
+                    CA_episodic_mean = 0
+                    CA_episodic_max = 0
+                    CA_episodic_alpha = 0
+                    CA_episodic_std = 0
+                    
                 NMI_classic_mean = np.mean(NMI_classic)
                 NMI_classic_std = np.std(NMI_classic)
-                NMI_episodic_mean = np.mean(NMI_episodic, 0)
-                NMI_episodic_stda = np.std(NMI_episodic, 0)
-                NMI_episodic_max = np.max(NMI_episodic_mean)
-                NMI_episodic_alpha = alpha[np.argmax(NMI_episodic_mean)]
-                NMI_episodic_std = NMI_episodic_stda[np.argmax(NMI_episodic_mean)]
-
+                if len(NMI_episodic) > 0:
+                    NMI_episodic_mean = np.mean(NMI_episodic, 0)
+                    NMI_episodic_stda = np.std(NMI_episodic, 0)
+                    NMI_episodic_max = np.max(NMI_episodic_mean)
+                    NMI_episodic_alpha = alpha[np.argmax(NMI_episodic_mean)]
+                    NMI_episodic_std = NMI_episodic_stda[np.argmax(NMI_episodic_mean)]
+                else:
+                    NMI_episodic_mean = 0
+                    NMI_episodic_max = 0
+                    NMI_episodic_alpha = 0
+                    NMI_episodic_std = 0
+                    
                 AMI_classic_mean = np.mean(AMI_classic)
                 AMI_classic_std = np.std(AMI_classic)
-                AMI_episodic_mean = np.mean(AMI_episodic, 0)
-                AMI_episodic_stda = np.std(AMI_episodic, 0)
-                AMI_episodic_max = np.max(AMI_episodic_mean)
-                AMI_episodic_alpha = alpha[np.argmax(AMI_episodic_mean)]
-                AMI_episodic_std = AMI_episodic_stda[np.argmax(AMI_episodic_mean)]
+                if len(AMI_episodic) > 0:
+                    AMI_episodic_mean = np.mean(AMI_episodic, 0)
+                    AMI_episodic_stda = np.std(AMI_episodic, 0)
+                    AMI_episodic_max = np.max(AMI_episodic_mean)
+                    AMI_episodic_alpha = alpha[np.argmax(AMI_episodic_mean)]
+                    AMI_episodic_std = AMI_episodic_stda[np.argmax(AMI_episodic_mean)]
+                else:
+                    AMI_episodic_mean = 0
+                    AMI_episodic_max = 0
+                    AMI_episodic_alpha = 0
+                    AMI_episodic_std = 0
 
                 ARI_classic_mean = np.mean(ARI_classic)
                 ARI_classic_std = np.std(ARI_classic)
-                ARI_episodic_mean = np.mean(ARI_episodic, 0)
-                ARI_episodic_stda = np.std(ARI_episodic, 0)
-                ARI_episodic_max = np.max(ARI_episodic_mean)
-                ARI_episodic_alpha = alpha[np.argmax(ARI_episodic_mean)]
-                ARI_episodic_std = ARI_episodic_stda[np.argmax(ARI_episodic_mean)]
+                if len(ARI_episodic) > 0:
+                    ARI_episodic_mean = np.mean(ARI_episodic, 0)
+                    ARI_episodic_stda = np.std(ARI_episodic, 0)
+                    ARI_episodic_max = np.max(ARI_episodic_mean)
+                    ARI_episodic_alpha = alpha[np.argmax(ARI_episodic_mean)]
+                    ARI_episodic_std = ARI_episodic_stda[np.argmax(ARI_episodic_mean)]
+                else:
+                    ARI_episodic_mean = 0
+                    ARI_episodic_max = 0
+                    ARI_episodic_alpha = 0
+                    ARI_episodic_std = 0
+
 
                 if modelName == "resnet50":
                     modelName = "ResNet50v2"
@@ -189,8 +222,8 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
                 pretrainedFile = pretrainedPath + fileName + f'_cluster_test_0.txt' 
                 trainedFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
                 if datasetName == 'tieredImagenet':
-                    #trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}C.txt' 
-                    trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
+                    trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}C.txt' 
+                    #trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
                 else:
                     trainedClassicFile = filePath + fileName + f'_cluster_test_{seed}.txt' 
                 #print(pretrainedFile, trainedFile)
@@ -207,7 +240,8 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
                     data_df_classic = pd.read_csv(trainedClassicFile)
                     data_df_classic = data_df_classic.loc[data_df_classic['ClusterAlgo'] == clusterAlgo]
                     data_df_classic = data_df_classic.loc[data_df_classic['TrainMethod'] == "classic"]
-
+                    
+                    print(trainedFile)
                     data_df = pd.read_csv(trainedFile)
                     data_df = data_df.loc[data_df['ClusterAlgo'] == clusterAlgo]
                     data_df = data_df.loc[data_df['TrainMethod'] == "episodic"]  
@@ -217,7 +251,9 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
                     classicScore = data_df_classic[metricScore].to_list()
                     if len(classicScore) > 0:
                         ARI_classic.append(classicScore)
-                    ARI_episodic.append(data_df[metricScore].to_list())
+                    episodicScore = data_df[metricScore].to_list()    
+                    if len(episodicScore) > 0:
+                        ARI_episodic.append(episodicScore)
                                         
                     filesExist = True
                 else:
@@ -226,9 +262,14 @@ def plotBestScores(pretrainedPath, filePath, datasetName, metricScore, modelName
             if filesExist:
                 ARI_pretrained_mean = np.mean(ARI_pretrained)
                 ARI_classic_mean = np.mean(ARI_classic)
-                ARI_episodic_mean = np.mean(ARI_episodic, 0)
-                ARI_episodic_max = np.max(ARI_episodic_mean)
-                ARI_episodic_alpha = alpha[np.argmax(ARI_episodic_mean)]
+                if len(ARI_episodic) > 0:
+                    ARI_episodic_mean = np.mean(ARI_episodic, 0)
+                    ARI_episodic_max = np.max(ARI_episodic_mean)
+                    ARI_episodic_alpha = alpha[np.argmax(ARI_episodic_mean)]
+                else:
+                    ARI_episodic_mean = 0
+                    ARI_episodic_max = 0
+                    ARI_episodic_alpha = 0
                 print(modelName, clusterAlgo, ARI_pretrained_mean, ARI_classic_mean, ARI_episodic_max, ARI_episodic_alpha)
             
             methods = ['Pretrained', 'Classic', r'Episodic ($\alpha$=' + f'{ARI_episodic_alpha})']
@@ -582,7 +623,7 @@ def plotRanResult3():
 #%% MAIN
 if __name__=='__main__':
  
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 8})
 
     #plotRanResult3()
         
@@ -592,7 +633,7 @@ if __name__=='__main__':
     clusterAlgos = ["SpecClust"] # Kmeans, SpecClust
     metricScore = "RIscore" # RIscore, MIscore, NMIscore
     
-    dataSet = "euMoths" # euMoths, CUB, miniImagenet, tieredImagenet
+    dataSet = "tieredImagenet" # euMoths, CUB, miniImagenet, tieredImagenet
     tableText = createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["Kmeans"])
     tableText += createTableDataPaper(pretrainedPath, clusteringPath, dataSet, models, ["SpecClust"])
     print(dataSet)
@@ -601,4 +642,4 @@ if __name__=='__main__':
     #plotBestScores(pretrainedPath, clusteringPath, "euMoths", metricScore, models, clusterAlgos)
     #plotBestScores(pretrainedPath, clusteringPath, "CUB", metricScore, models, clusterAlgos)
     #plotBestScores(pretrainedPath, clusteringPath, "miniImagenet", metricScore, models, clusterAlgos)
-    #plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["Kmeans"])
+    #plotBestScores(pretrainedPath, clusteringPath, "tieredImagenet", metricScore, models, ["SpecClust"])
