@@ -1,5 +1,15 @@
 # Few-shot-clustering
-Python code for clustering of images using few-shot learning and episodic training
+
+This code base contains the python code for clustering of images using few-shot learning and episodic training.
+
+The method is described in the paper:
+
+K. Bjerge, P. Bodesheim, H. Karstoft, “Deep Image Clustering with Model-Agnostic Meta-Learning,” Accepted by the International Conference on Computer Vision and Theory and Applications (VISAPP 2025).
+
+The paper with link will be public in spring 2025.
+
+Supplementary material with detailed results are found in:  ![Supplementary Material](https://github.com/kimbjerge/few-shot-clustering/blob/main/DeepImageClusteringMAML_SupplemtaryMaterial.pdf)
+This document presents tables detailing the results of training deep learning models, including ResNet50v2, EfficientNetB3, ConvNeXt-B, and ViT-B/16, on various datasets such as EU Moths, Caltech Birds (CUB), tiered-ImageNet, and mini-ImageNet, as outlined in the accompanying paper.
 
 # Installation conda environment on Windows
 
