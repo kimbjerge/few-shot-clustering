@@ -149,7 +149,7 @@ if __name__=='__main__':
     parser.add_argument('--model', default='ConvNeXt') #resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4, ConvNeXt, ViTB16 
     parser.add_argument('--weights', default='euMoths') #ImageNet, euMoths, CUB
     parser.add_argument('--dataset', default='euMoths') #miniImagenet, euMoths, CUB
-    parser.add_argument('--method', default='Agglomerative') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, Agglomerative ALL
+    parser.add_argument('--method', default='SpecClust') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, Agglomerative ALL
     args = parser.parse_args()
   
     resDir = "./result/"
@@ -193,8 +193,8 @@ if __name__=='__main__':
         print('ConvNeXt Base')
         NetModel = convnext_base(weights=ConvNeXt_Base_Weights.IMAGENET1K_V1)
         model = EmbeddingsModel(NetModel, num_classes, use_fc=False, modelName="ConvNeXt")
-        #modelName += "ConvNeXt_euMoths_episodic_1_0721_221353_AdvLoss.pth"
-        modelName += "ConvNeXt_euMoths_episodic_2_0722_000232_AdvLoss.pth"
+        modelName += "ConvNeXt_euMoths_episodic_1_0721_221353_AdvLoss.pth"
+        #modelName += "ConvNeXt_euMoths_episodic_2_0722_000232_AdvLoss.pth"
         feat_dim = 1024
     if args.model == 'EfficientNetB3':
         print('EfficientNetB3')
@@ -277,10 +277,10 @@ if __name__=='__main__':
     
     #%% Create dataset
     if args.dataset == 'euMoths':
-        #test_set = FewShotDataset(split="train", image_size=image_size,  root=dataDirEuMoths, training=False)
-        #test_classes = num_classes
+        test_set = FewShotDataset(split="train", image_size=image_size,  root=dataDirEuMoths, training=False)
+        test_classes = num_classes
         #test_set = FewShotDataset(split="val", image_size=image_size,  root=dataDirEuMoths, training=False)
-        test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirEuMoths, training=False)
+        #test_set = FewShotDataset(split="test", image_size=image_size, root=dataDirEuMoths, training=False)
         print("euMoths Test dataset")
     if args.dataset == 'CUB':
         #test_set = FewShotDataset(split="train", image_size=image_size, training=False)
@@ -377,24 +377,36 @@ if __name__=='__main__':
         print("Rand index score", str(test_classes) + " classes", score)
     
         #%% Select only 8 classes for visual illustration
+        # index = np.where((predictions_all == 1) | 
+        #                  (predictions_all == 4) |
+        #                  (predictions_all == 7) |
+        #                  (predictions_all == 10) |
+        #                  (predictions_all == 12) |
+        #                  (predictions_all == 15) |
+        #                  (predictions_all == 17) |   
+        #                  (predictions_all == 19))
         index = np.where((predictions_all == 1) | 
+                         (predictions_all == 2) |
+                         (predictions_all == 3) |
                          (predictions_all == 4) |
-                         (predictions_all == 7) |
-                         (predictions_all == 10) |
-                         (predictions_all == 12) |
-                         (predictions_all == 15) |
-                         (predictions_all == 17) |   
-                         (predictions_all == 19))
+                         (predictions_all == 5) |
+                         (predictions_all == 6) |
+                         (predictions_all == 7) |   
+                         (predictions_all == 8) |
+                         (predictions_all == 9) |
+                         (predictions_all == 10)| 
+                         (predictions_all == 11) 
+                         )
     
         features = features_all[index]
         predictions = predictions_all[index]
         labels = np.array(labels_all)[index]  
     
         accuracy, TP = computeAccuracy(labels, predictions)
-        print("Similarity 8 classes", accuracy, TP, len(predictions))
+        print("Cluster accuracy 11 classes", accuracy, TP, len(predictions))
         # Compute accuracy
         score = adjusted_rand_score(labels, predictions)
-        print("Rand index score 8 classes ", score)
+        print("Adjusted rand index score 11 classes ", score)
     
         # Best performance with ResNet18 - episodic training and scatter loss
         # Accuracy 50 classes 0.74, 8 classes 0.69
@@ -405,14 +417,15 @@ if __name__=='__main__':
         z = tsne.fit_transform(features)
         df = pd.DataFrame()
         df["y"] = predictions
-        df["comp-1"] = z[:,0]
-        df["comp-2"] = z[:,1]
+        df["Comp-1"] = z[:,0]
+        df["Comp-2"] = z[:,1]
         
-        sns.scatterplot(x="comp-1", y="comp-2", hue=df.y.tolist(),
-                        palette=sns.color_palette("hls", 8),
+        sns.scatterplot(x="Comp-1", y="Comp-2", hue=df.y.tolist(),
+                        palette=sns.color_palette("hls", 11),
         #                data=df).set(title="ImageNet train dataset T-SNE projection")
-                        data=df).set(title="EU moths dataset T-SNE projection")
-       
+        #                data=df).set(title="Clustering of EU Moths (Pretrained)")
+                       data=df).set(title="")
+      
     
         #plot_gmm(gmm, features_all) 
     
