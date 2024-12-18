@@ -147,7 +147,7 @@ if __name__=='__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default='ConvNeXt') #resnet18, resnet34, resnet50, EfficientNetB3, EfficientNetB4, ConvNeXt, ViTB16 
-    parser.add_argument('--weights', default='euMoths') #ImageNet, euMoths, CUB
+    parser.add_argument('--weights', default='ImageNet') #ImageNet, euMoths, CUB
     parser.add_argument('--dataset', default='euMoths') #miniImagenet, euMoths, CUB
     parser.add_argument('--method', default='SpecClust') #IsoForest, GMM, Kmeans, SpecClust, DBSCANClust, HDBSCANClust, Agglomerative ALL
     args = parser.parse_args()
@@ -425,7 +425,7 @@ if __name__=='__main__':
         #                data=df).set(title="ImageNet train dataset T-SNE projection")
         #                data=df).set(title="Clustering of EU Moths (Pretrained)")
                        data=df).set(title="")
-      
-    
+        plt.legend(bbox_to_anchor=(1.2, 1), borderaxespad=0)
+        plt.show()
         #plot_gmm(gmm, features_all) 
     
