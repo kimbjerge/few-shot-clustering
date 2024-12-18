@@ -89,14 +89,22 @@ The models and results will be stored in the folder modelsAdv and tensorboard lo
 To view the tensorboard log files write: tensorflow --logdir runs/
 
 # Episodic training with transfer learning
-To train models on the miniImageNet, tieredImageNet, CUB and EU-Moths dataset with pretrained weights from ImageNet the backbones ResNet50, EfficientNetB3, ConvNeXt-Base and ViT-B/16 is provided. 
+To train models on the dataset: "mini_imagenet", "tiered_imagenet", "CUB" and "euMoths" with pretrained weights from ImageNet the backbones ResNet50, EfficientNetB3, ConvNeXt-Base and ViT-B/16 is provided. 
 
-The Linux bash script/trainCUBPreAdv.sh contains command arguments to train with the CU-Birds dataset:
+The Linux bash script/trainResNet50_multi_alpha.sh contains command arguments to train with the ResNet50 models:
 
-    python FewShotTrainingAdvLoss.py --model resnet18 --dataset CUB --mode episodic --slossFunc Std --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --tasks 500 --valTasks 100 --query 10 --device cuda:0
+    python ClusterTraining.py --model resnet50 --dataset $1 --mode episodic --alpha 0.2 --m1 3 --m2 6 --epochs 8 --learnRate 0.001 --pretrained True --slossFunc Multi --cluster True --tasks 300 --valTasks 100 --way 30 --shot 5 --query 6 --device cuda:0
 
-The linux bash script/traineuMothsPreAdv.sh contains command arguments to train with the EU-Moths dataset:
+The linux bash script/trainEffNet_multi_alpha.sh contains command arguments to train with the EfficientNetB3 models:
 
-    python FewShotTrainingAdvLoss.py --model resnet18 --dataset euMoths --mode episodic --alpha 0.5 --m1 120 --m2 190 --epochs 250 --learnRate 0.001 --pretrained True --slossFunc Std --tasks 500 --valTasks 100 --query 6 --device cuda:0
+    python ClusterTraining.py --model effB3 --dataset $1 --mode episodic --alpha 0.2 --m1 3 --m2 6 --epochs 8 --learnRate 0.001 --pretrained True --slossFunc Multi --cluster True --tasks 300 --valTasks 100 --way 25 --shot 5 --query 6 --device cuda:0
+    
+The linux bash script/trainConvNeXt_multi_alpha.sh contains command arguments to train with the ConvNeXt-Base models:
 
-The folder modelsFinalPreAdv contains the trained models with files that are generated for every model and contains arguments and results for training.
+    python ClusterTraining.py --model ConvNeXt --dataset $1 --mode episodic --alpha 0.2 --m1 3 --m2 6 --epochs 8 --learnRate 0.001 --pretrained True --slossFunc Multi --cluster True --tasks 300 --valTasks 100 --way 15 --shot 5 --query 6 --device cuda:0
+
+The linux bash script/trainViTB16_multi_alpha.sh contains command arguments to train with the ViT-B/16 models:
+
+    python ClusterTraining.py --model ViTB16 --dataset $1 --mode episodic --alpha 0.2 --m1 3 --m2 6 --epochs 8 --learnRate 0.001 --pretrained True --slossFunc Multi --cluster True --tasks 300 --valTasks 100 --way 25 --shot 5 --query 6 --device cuda:0
+
+The folder modelsAdv contains the trained models with files that are generated for every model and contains arguments and results for training.
