@@ -53,7 +53,7 @@ Download and unzip the preprocessed version of the miniImageNet benchmark datase
 
 Copy the image files to data/mini_imagenet
 
-The train.json, val.json, and test.json split the dataset into 60 classes for training, 20 classes validation, and 20 test.
+The train.json, val.json, and test.json split the dataset into 60 classes for training, 20 validation classes, and 20 test classes.
 
 With prepare/prepare_mini_imagenet.py it is possible to create another split of the miniImageNet dataset.
 
