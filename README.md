@@ -108,3 +108,13 @@ The linux bash script/trainViTB16_multi_alpha.sh contains command arguments to t
     python ClusterTraining.py --model ViTB16 --dataset $1 --mode episodic --alpha 0.2 --m1 3 --m2 6 --epochs 8 --learnRate 0.001 --pretrained True --slossFunc Multi --cluster True --tasks 300 --valTasks 100 --way 25 --shot 5 --query 6 --device cuda:0
 
 The folder modelsAdv contains the trained models with files that are generated for every model and contains arguments and results for training.
+
+# Deep Image Clustering with trained models
+
+FewShotClustering.py - performs clustering on the test or validation dataset based on the trained models found in modelDir 
+    
+    python FewShotClustering.py --device cuda:0 --seed 0 --modelDir modelsAdv
+
+plotFewShotClustering.py - printing and plotting results presented in paper
+
+
