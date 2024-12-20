@@ -2,6 +2,8 @@
 
 This code base contains the python code for clustering of images using few-shot learning and episodic training.
 
+![Alt text](ClusterPipelineV2.png)
+
 The method is described in the paper:
 
 K. Bjerge, P. Bodesheim, H. Karstoft, “Deep Image Clustering with Model-Agnostic Meta-Learning,” Accepted by the International Conference on Computer Vision and Theory and Applications (VISAPP 2025).
