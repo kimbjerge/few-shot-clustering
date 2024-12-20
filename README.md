@@ -82,7 +82,7 @@ The train.json, val.json, and test.json split the dataset into 100 train classes
 
 With prepare/prepare_eu_moths.py it is possible to create another split of the EU moths dataset.
 
-# Episodic training
+# Episodic training (Step 1.)
 Episodic training for domain generalization is the problem of learning models that generalize to novel testing domains with different statistics and classes than in the set of the known training domain. The method learns a model that generalizes well to a novel domain without any knowledge of the novel validation domain with new classes during episodic model training. It is also called the meta-learning paradigm, here we have a set of tasks to learn in each epoch. Each task also called an episode contains a support set of K-classes (K-way) with a N-shot of images for each class. A query set of images is matched with the support set using a few-shot Protypical network that compares the embeddings from the backbone of the convolutional neural network. The Prototypical network uses the Euclidian distance as a similarity function during training to find the best matching class in the support set. Episodic training can be performed with and without pre-trained weights where the backbone in our experiments is ResNet50, EfficientNetB3, ConvNeXt-Base and ViT-B/16.
 
 When training with pre-trained weights the model with the best Cluster Accuracy (CA) with K-means clustering on the validation dataset is stored.
@@ -90,7 +90,7 @@ The models and results will be stored in the folder modelsAdv and tensorboard lo
 
 To view the tensorboard log files write: tensorflow --logdir runs/
 
-# Episodic training with transfer learning
+## Episodic training with transfer learning
 To train models on the dataset: "mini_imagenet", "tiered_imagenet", "CUB" and "euMoths" with pretrained weights from ImageNet the backbones ResNet50, EfficientNetB3, ConvNeXt-Base and ViT-B/16 is provided. 
 
 The Linux bash script/trainResNet50_multi_alpha.sh contains command arguments to train with the ResNet50 models:
@@ -111,7 +111,7 @@ The linux bash script/trainViTB16_multi_alpha.sh contains command arguments to t
 
 The folder modelsAdv contains the trained models with files that are generated for every model and contains arguments and results for training.
 
-# Deep Image Clustering with trained models
+# Deep Image Clustering with trained models (Step 2.+ 3.)
 
 FewShotClustering.py - performs clustering on the test or validation dataset based on the trained models found in modelDir 
     
